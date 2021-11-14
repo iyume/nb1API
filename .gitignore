@@ -1,0 +1,28 @@
+# cache
+__pycache__/
+
+# packaging
+dist/
+/doc/build/*
+eggs/
+*.egg-info/
+sdist/
+lib/
+wheels/
+
+# dev
+venv/
+__pypackages__/
+.mypy_cache/
+workspace.*
+node_modules/
+.vscode/
+/api.md
+/doc/test.py
+
+# test
+pyproject.toml
+doc/md
+
+# public
+!/doc/build/nonebot
