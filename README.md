@@ -4,7 +4,7 @@
 
 ## TODO
 
-- [ ] pyi
+- [x] pyi
 
     **在此问题的解决上，我对 pyi resolver 定义了一下几点行为**
 
@@ -28,27 +28,25 @@
 
     > patch `__code__` on pyi function
 
-    此处使用了第二种方式
-
-    **利用 pyi 生成的基本原理如下**
-
-    1. `exec()` 获取 pyi 的 variables, functions, classes
-
-    2. 使用 real module `__pdoc__` 解析所有 real object，生成 `Dict[obj_name, obj_docstring]`
-
-    3. 在 module-level 上获取公开对象（依赖从 real module 过滤出的对象名），重写它的 `__module__`
-
-    4. 使用 ast 解析 pyi 源码，得到 module-level `var_docstrings` and `annotations`, class-level `var_docstrings` and `instance_docstrings`
-
     **WARNING:**
 
     1. stub file 禁止出现 relative import，原因是 `exec()` 无法得知当前文件的 parent package
 
-- [ ] decorator
-
-    如果在 pyi 只有函数 overload type，而没有写函数的实体 type，则会出现 `<Signature (*args, **kwds)>`。原因是 overload 没有定义 `__wrapped__` 所以无法获取函数实体。
-
 - [ ] overload
+
+    **overload 问题上，有以下几点特点**
+
+    1. 一个 type overload function 应当只有 `@overload` 一个装饰器
+
+    **解决方法**
+
+    1. 移除 ast.FunctionDef.decorator_list 后 unparse 源码，使用 exec 获得的 globals 执行去除装饰器的源码获取函数对象
+
+    2. 对函数对象签名，保存
+
+    3. 存在 globals 的对应对象应该是一个函数的 implement，提取出来为 docstring resolver 作准备
+
+- [ ] decorator
 
 - [ ] url link
 
