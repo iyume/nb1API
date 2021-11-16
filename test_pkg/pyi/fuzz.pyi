@@ -1,4 +1,4 @@
-from typing import Union, Literal, Set, overload
+from typing import Literal, Set
 from contextvars import ContextVar
 
 from test_pkg.pyi.util import func_forimport, T_Checktyping
@@ -24,14 +24,7 @@ comment_after: Literal['f']
 comment_inline: Literal['g']  #: comment inline
 
 
-@overload
-def func(arg: ContextVar[int]) -> T_Checktyping: ...
-
-@overload
 def func(arg: int) -> T_Checktyping: ...
-
-
-def func(arg: Union[ContextVar[int], int]) -> T_Checktyping: ...
 
 
 class A:

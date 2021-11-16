@@ -78,6 +78,8 @@ def formatannotation(annot: Type, new_style: bool = True) -> str:
         return ''
     elif annot is None.__class__:
         return 'None'
+    elif isinstance(annot, str):
+        return annot
     module = getattr(annot, '__module__', '')
     if module == 'typing' and getattr(annot, '__qualname__', '').startswith('NewType.'):
         annot = annot.__name__

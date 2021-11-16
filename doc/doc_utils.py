@@ -1,16 +1,27 @@
 """
-the tool box for solving the document, this module should be injected to the Mako render context.
+the tool box for solving the document.
+
+this module should be injected to the Mako render context.
+
+Solution:
+
+    `Description`:
+        Any docstring (include variable comment) will be parsed to
+        short_description and long_description,
+        and a normal_description give f'{shot_desc}\\n\\n{long_desc}'
+
+    `other similar block`:
+        normally list of `name(annot) <badge>: desc`
 """
-from typing import Union, Optional, Any, Callable, List, Tuple, Dict, cast, Type
+from typing import Union, Optional, Callable, List, Tuple, Type
 import re
 import inspect
-import unicodedata
 from textwrap import dedent
 from dataclasses import dataclass
-from warnings import warn
 
 import pdoc
-from pdoc.pycode import formatannotation, convert_anno_new_style
+from pdoc.pycode import formatannotation
+
 
 T_Annotation = Optional[str]
 T_Version = Optional[str]
@@ -26,6 +37,7 @@ class DocstringParam:
     # default: Optional[str] = None  ## default value has been described in title
     description: T_Description = ''
 
+
 @dataclass
 class DocstringSection:
     identity: str
@@ -35,6 +47,7 @@ class DocstringSection:
     version: T_Version = None  # second-level version
     def __str__(self):
         return self.source
+
 
 class Docstring:
     """
@@ -110,11 +123,11 @@ class Docstring:
                     try:
                         method(section)
                     except Exception:
-                        warn(f'find method `{method.__name__}` but raises when calling',
-                            stacklevel=3)
+                        print('ERROR parsing docstring:',
+                            f'Find method `{method.__name__}` but raises when calling.')
                     continue
                 # setattr to string if anno is not DocstringSection
-                if not self.__annotations__.get(identity, None) == DocstringSection:
+                if not self.__annotations__.get(identity, None) is DocstringSection:
                     setattr(self, identity, text_sec)
                     continue
                 self.generic_parser(section)

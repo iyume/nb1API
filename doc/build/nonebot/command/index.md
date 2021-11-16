@@ -364,7 +364,9 @@ user_id = session.ctx['user_id']
 
 - **类型:** int
 
-- **说明:** 当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
+- **说明**
+
+当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
 
 等价于 `session.event.self_id`。
 
@@ -378,7 +380,9 @@ await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='H
 
 - **类型:** dict[str, Any]
 
-- **说明:** 命令会话的状态数据（包括已获得的所有参数）。
+- **说明**
+
+命令会话的状态数据（包括已获得的所有参数）。
 
 属性本身只读，但属性中的内容可读写。
 

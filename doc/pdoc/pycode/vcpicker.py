@@ -23,18 +23,16 @@ Example:
     ```
     a's docstring is 'example docstring'
 """
-from typing import Iterable, List, Dict, Tuple, Union, Optional, Any, cast
-import ast
 import re
-import itertools
+import ast
 import inspect
-from inspect import Signature
+import itertools
+from typing import Iterable, Iterator, List, Dict, Union, Optional, cast
 from collections import OrderedDict
 
 
 comment_re = re.compile(r'^\s*#: ?(.*)$')
 indent_re = re.compile(r'^\s*$')
-emptyline_re = re.compile(r'^\s*(#.*)?$')
 
 
 def extract_all_comments(source: str) -> 'VariableCommentPicker':
@@ -74,13 +72,13 @@ def get_target_names(node: Union[str, ast.AST],
         return [node]
     node_name = node.__class__.__name__
     if node_name in ('Index', 'Num', 'Slice', 'Str', 'Subscript'):
-        raise TypeError('%r does not create new variable' % node)
+        raise TypeError(f'{node!r} does not create new variable')
     elif node_name == 'Name':
         node = cast(ast.Name, node)
         if self is None or node.id == self.arg:
             return [node.id]
         else:
-            raise TypeError('The assignment %r is not instance variable' % node)
+            raise TypeError(f'The assignment {node!r} is not instance variable')
     elif node_name in ('Tuple', 'List'):
         node = cast(Union[ast.Tuple, ast.List], node)
         members = []
@@ -97,50 +95,39 @@ def get_target_names(node: Union[str, ast.AST],
             # instance variable
             return [node.attr]
         else:
-            raise TypeError('The assignment %r is not instance variable' % node)
+            raise TypeError(f'The assignment {node!r} is not instance variable')
     else:
-        raise NotImplementedError('Unexpected node name %r' % node_name)
-
-
-def dedent_docstring(s: str) -> str:
-    """Remove common leading indentation from docstring."""
-    def dummy() -> None:
-        # dummy function to mock `inspect.getdoc`.
-        pass
-
-    dummy.__doc__ = s
-    docstring = inspect.getdoc(dummy)
-    if docstring:
-        return docstring.lstrip("\r\n").rstrip("\r\n")
-    else:
-        return ""
+        raise NotImplementedError(f'Unexpected node name {node_name!r}')
 
 
 class VariableCommentPicker(ast.NodeVisitor):
-    """Python source code parser to pick up variable comments."""
+    """
+    Python source code parser to pick up variable comments.
 
-    def __init__(self, buffers: Iterable[str], encoding: str = 'utf-8') -> None:
-        self.counter = itertools.count()
+    Args:
+        buffers: splitlines of source code, visit comment for convenience.
+        encoding: encoding to decode bytes in ast.Expr or anyclass from ast.Constant.
+    """
+
+    def __init__(
+        self,
+        buffers: Union[Iterable[str], Iterator[str]],
+        encoding: str = 'utf-8'
+    ) -> None:
         self.buffers = list(buffers)
         self.encoding = encoding
         self.context: List[str] = []
-        self.current_classes: List[str] = []
+        self.current_class: Optional[ast.ClassDef] = None
         self.current_function: Optional[ast.FunctionDef] = None
         self.comments: Dict[str, str] = OrderedDict()
         self.previous: Optional[ast.AST] = None
-        self.deforders: Dict[str, int] = {}
-        self.finals: List[str] = []
-        self.overloads: Dict[str, List[Signature]] = {}
-        self.typing: Optional[str] = None
-        self.typing_final: Optional[str] = None
-        self.typing_overload: Optional[str] = None
+        self.visited: List[str] = []
         super().__init__()
 
     def get_qualname_for(self, name: str) -> Optional[List[str]]:
         """Get qualified name for given object as a list of string(s)."""
         if self.current_function:
-            if self.current_classes and self.context[-1] == "__init__":
-                # store variable comments inside __init__ method of a class
+            if self.current_class:
                 return self.context[:-1] + [name]
             else:
                 return None
@@ -150,18 +137,7 @@ class VariableCommentPicker(ast.NodeVisitor):
     def add_entry(self, name: str) -> None:
         qualname = self.get_qualname_for(name)
         if qualname:
-            self.deforders[".".join(qualname)] = next(self.counter)
-
-    def add_final_entry(self, name: str) -> None:
-        qualname = self.get_qualname_for(name)
-        if qualname:
-            self.finals.append(".".join(qualname))
-
-    def add_overload_entry(self, func: ast.FunctionDef) -> None:
-        # avoid circular import problem
-        qualname = self.get_qualname_for(func.name)
-        if qualname:
-            overloads = self.overloads.setdefault(".".join(qualname), [])
+            self.visited.append(".".join(qualname))
 
     def add_variable_comment(self, name: str, comment: str) -> None:
         qualname = self.get_qualname_for(name)
@@ -170,38 +146,6 @@ class VariableCommentPicker(ast.NodeVisitor):
             if basename:
                 name = ".".join((basename, name))
             self.comments[name] = comment
-
-    def is_final(self, decorators: List[ast.expr]) -> bool:
-        final = []
-        if self.typing:
-            final.append('%s.final' % self.typing)
-        if self.typing_final:
-            final.append(self.typing_final)
-
-        for decorator in decorators:
-            try:
-                if ast.unparse(decorator) in final:
-                    return True
-            except NotImplementedError:
-                pass
-
-        return False
-
-    def is_overload(self, decorators: List[ast.expr]) -> bool:
-        overload = []
-        if self.typing:
-            overload.append('%s.overload' % self.typing)
-        if self.typing_overload:
-            overload.append(self.typing_overload)
-
-        for decorator in decorators:
-            try:
-                if ast.unparse(decorator) in overload:
-                    return True
-            except NotImplementedError:
-                pass
-
-        return False
 
     def get_self(self) -> Optional[ast.arg]:
         """Returns the name of the first argument if in a function."""
@@ -219,31 +163,12 @@ class VariableCommentPicker(ast.NodeVisitor):
         super().visit(node)
         self.previous = node
 
-    def visit_Import(self, node: ast.Import) -> None:
-        """Handles Import node and record the order of definitions."""
-        for name in node.names:
-            self.add_entry(name.asname or name.name)
-            if name.name == 'typing':
-                self.typing = name.asname or name.name
-            elif name.name == 'typing.final':
-                self.typing_final = name.asname or name.name
-            elif name.name == 'typing.overload':
-                self.typing_overload = name.asname or name.name
-
-    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
-        """Handles Import node and record the order of definitions."""
-        for name in node.names:
-            self.add_entry(name.asname or name.name)
-            if node.module == 'typing' and name.name == 'final':
-                self.typing_final = name.asname or name.name
-            elif node.module == 'typing' and name.name == 'overload':
-                self.typing_overload = name.asname or name.name
-
     def visit_Assign(self, node: ast.Assign) -> None:
         """Handles Assign node and pick up a variable comment."""
         try:
             targets = get_assign_targets(node)
-            varnames: List[str] = sum([get_target_names(t, self=self.get_self()) for t in targets], [])  # NOQA
+            varnames: List[str] =  list(itertools.chain(
+                *(get_target_names(t, self=self.get_self()) for t in targets)))
             current_line = self.get_line(node.lineno)
         except TypeError:
             return  # this assignment is not new definition!
@@ -251,6 +176,7 @@ class VariableCommentPicker(ast.NodeVisitor):
         comment: Optional[str] = None
 
         if indent_re.match(current_line[:node.col_offset]):
+            # TODO: comment col_offset should be the same as node.col_offset
 
             # check comments after assignment
             current_line_ext = current_line[node.end_col_offset:]
@@ -276,7 +202,6 @@ class VariableCommentPicker(ast.NodeVisitor):
                 self.add_variable_comment(varname, comment)
             return
 
-        # not commented (record deforders only)
         for varname in varnames:
             self.add_entry(varname)
 
@@ -295,10 +220,8 @@ class VariableCommentPicker(ast.NodeVisitor):
                     if isinstance(node.value.s, str):
                         docstring = node.value.s
                     else:
-                        docstring = node.value.s.decode(self.encoding or 'utf-8')
-
-                    self.add_variable_comment(varname, dedent_docstring(docstring))
-                    self.add_entry(varname)
+                        docstring = node.value.s.decode(self.encoding)
+                    self.add_variable_comment(varname, inspect.cleandoc(docstring))
             except TypeError:
                 pass  # this assignment is not new definition!
 
@@ -313,29 +236,22 @@ class VariableCommentPicker(ast.NodeVisitor):
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         """Handles ClassDef node and set context."""
-        if self.current_classes:
-            # ignore class inner class
-            return
-        self.current_classes.append(node.name)
-        self.add_entry(node.name)
-        if self.is_final(node.decorator_list):
-            self.add_final_entry(node.name)
-        self.context.append(node.name)
-        self.previous = node
-        for child in node.body:
-            self.visit(child)
-        self.context.pop()
-        self.current_classes.pop()
+        # ignore class inner class
+        if self.current_class is None:
+            self.context.append(node.name)
+            self.current_class = node
+            for child in node.body:
+                self.visit(child)
+            self.context.pop()
+            self.current_class = None
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Handles FunctionDef node and set context."""
         # ignore function inner function
         if self.current_function is None:
-            self.add_entry(node.name)  # should be called before setting self.current_function
-            if self.is_final(node.decorator_list):
-                self.add_final_entry(node.name)
-            if self.is_overload(node.decorator_list):
-                self.add_overload_entry(node)
+            if self.current_class and not node.name == '__init__':
+                # only visit __init__ in class
+                return
             self.context.append(node.name)
             self.current_function = node
             for child in node.body:

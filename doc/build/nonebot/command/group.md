@@ -35,7 +35,9 @@ sidebarDepth: 0
 
 - **类型:** dict[str, Any]
 
-- **说明:** 此对象初始化时传递的 `permission`, `only_to_me`, `privileged`, `shell_like`, `expire_timeout`, `run_timeout`, `session_class`。
+- **说明**
+
+此对象初始化时传递的 `permission`, `only_to_me`, `privileged`, `shell_like`, `expire_timeout`, `run_timeout`, `session_class`。
 
 如果没有传递，则此字典也不存在相应键值。
 

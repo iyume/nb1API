@@ -77,8 +77,15 @@ ${doc.examples}
 - **类型:** ${doc.var_type}${get_version(getattr(doc, 'type_version', ''))}
 
 % if doc.description:
+% if '\n\n' in doc.description:
+- **说明**
+
+${doc.description}
+
+% else:
 - **说明:** ${doc.description}
 
+% endif
 % endif
 % if hasattr(doc, 'examples'):
 - **用法**

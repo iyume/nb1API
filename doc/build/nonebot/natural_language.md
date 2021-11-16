@@ -124,7 +124,9 @@ group_id = session.event.group_id
 
 - **类型:** int
 
-- **说明:** 当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
+- **说明**
+
+当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
 
 等价于 `session.event.self_id`。
 
