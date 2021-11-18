@@ -1,6 +1,6 @@
 import ast
 import inspect
-from typing import List, Dict, Union, Optional, get_args
+from typing import Any, Callable, List, Dict, Union, Optional, get_args
 from copy import deepcopy
 from inspect import Signature
 
@@ -9,7 +9,7 @@ T_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
 
 def extract_all_overloads(source: str) -> 'OverloadPicker':
-    picker = OverloadPicker()
+    picker = OverloadPicker(source)
     astmodule = ast.parse(source)
     picker.visit(astmodule)
     return picker
@@ -20,29 +20,33 @@ class OverloadPicker(ast.NodeVisitor):
     Python ast visitor to pick up overload function source.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, source: str) -> None:
         self.context: List[str] = []
         self.current_class: Optional[ast.ClassDef] = None
-        self.overloads: Dict[str, List[str]] = {}
-        self.functions: Dict[str, T_Function] = {}
+        self.overloads: Dict[str, List[Signature]] = {}
+        self.functions: Dict[str, List[T_Function]] = {}
+        self.globals: Dict[str, Any] = {}
+        self.implements: Dict[str, Callable] = {}
         self.typing: List[str] = []
         self.typing_overload: List[str] = []
         super().__init__()
+        try:
+            exec(source, self.globals)
+        except Exception:
+            return
 
-    def is_overload(
-        self,
-        node: T_Function
-    ) -> bool:
+    def is_overload(self, node: T_Function) -> bool:
         overload_ids = [f'{i}.overload' for i in self.typing] + self.typing_overload
         for decorator in node.decorator_list:
             if ast.unparse(decorator) in overload_ids:
                 return True
         return False
 
-    def add_overload_signature(
-        self,
-        node: T_Function
-    ) -> None:
+    def add_implement_for(self, name: str) -> None:
+        if name in self.globals:
+            self.implements.setdefault(name, self.globals[name])
+
+    def add_overload_signature(self, node: T_Function) -> None:
         qualname = node.name
         if self.current_class:
             qualname = f'{self.current_class.name}.{node.name}'
@@ -50,7 +54,14 @@ class OverloadPicker(ast.NodeVisitor):
         node = deepcopy(node)
         node.decorator_list.clear()
         unwrap_source = ast.unparse(node)
-        overloads.append(unwrap_source)
+        self.add_implement_for(node.name)
+        _globals = self.globals.copy()
+        exec(unwrap_source, _globals)
+        unwrap_obj = _globals[node.name]
+        if not callable(unwrap_obj):
+            raise TypeError(f'Unknown type: {type(unwrap_obj)}')
+        signature = inspect.signature(_globals[node.name])
+        overloads.append(signature)
 
     def visit_Import(self, node: ast.Import) -> None:
         for name in node.names:
@@ -83,7 +94,8 @@ class OverloadPicker(ast.NodeVisitor):
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Handles FunctionDef node and set context."""
         self.context.append(node.name)
-        self.functions[node.name] = node
+        lst = self.functions.setdefault(node.name, [])
+        lst.append(node)
         if self.is_overload(node):
             self.add_overload_signature(node)
         self.context.pop()

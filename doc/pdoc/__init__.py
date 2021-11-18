@@ -604,6 +604,7 @@ class Doc:
             return f'#{self.refname}'
 
         # Otherwise, compute relative path from current module to link target
+        # Pylance bug: https://github.com/samuelcolvin/pydantic/issues/3376
         url = os.path.relpath(self._url(), relative_to.url()).replace(path.sep, '/')
         # We have one set of '..' too many
         if url.startswith('../'):
@@ -815,6 +816,7 @@ class Module(Doc):
                 with open(pyi_path) as f:
                     pyi_source = f.read()
                 vcpicker = pycode.extract_all_comments(pyi_source)
+                overloadspicker = pycode.extract_all_overloads(pyi_source)
                 public_names = public_objs.keys()
                 new_docstrings = vcpicker.comments.copy()
                 # Add `real` module docstring dictionary if not in pyi module
@@ -1634,7 +1636,6 @@ class Function(Doc):
 
         return params
 
-    @staticmethod
     @lru_cache()
     def _signature_from_string(self):
         signature = None
