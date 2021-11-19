@@ -276,10 +276,7 @@ def get_title(mod: pdoc.Doc) -> str:
             return mod.name in getattr(mod.cls.obj, '__abstractmethods__', [])
         return False
     def is_property(mod: pdoc.Doc) -> bool:
-        # return isinstance(mod.obj, property)
-        # isinstance not work due to pdoc take the `fget` object
-        # rather than property itself
-        return mod.source.startswith('@property')
+        return isinstance(mod.obj, property)
 
     prefix_builder = []
     body = mod.name
