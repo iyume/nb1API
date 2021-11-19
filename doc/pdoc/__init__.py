@@ -547,7 +547,7 @@ class Doc:
     def __repr__(self):
         return f'<{self.__class__.__name__} {self.refname!r}>'
 
-    @property  # type: ignore
+    @property
     @lru_cache()
     def source(self) -> str:
         """
@@ -555,10 +555,9 @@ class Doc:
         available, an empty string.
         """
         try:
-            lines, _ = inspect.getsourcelines(self.obj)
-        except (ValueError, TypeError, OSError):
+            return inspect.getsource(self.obj)
+        except OSError:
             return ''
-        return inspect.cleandoc(''.join(['\n'] + lines))
 
     @property
     def refname(self) -> str:
@@ -808,17 +807,22 @@ class Module(Doc):
                     del self.doc[root]
                     self._context.pop(m.refname)
 
+        # Find overload function from source code
         # Find stub file for a module or package
         if not self.is_namespace:
+            overloads = pycode.extract_all_overloads(
+                                    self.source, globals=module.__dict__).overloads
+            for dobj in self.functions(cls_level=True):
+                if dobj.qualname in overloads:
+                    dobj.overloads = overloads[dobj.qualname]
 
             pyi_path = Path(self.obj.__file__).with_suffix('.pyi')
             if pyi_path.exists():
                 with open(pyi_path) as f:
                     pyi_source = f.read()
-                vcpicker = pycode.extract_all_comments(pyi_source)
-                overloadspicker = pycode.extract_all_overloads(pyi_source)
+                overloads = pycode.extract_all_overloads(pyi_source).overloads
                 public_names = public_objs.keys()
-                new_docstrings = vcpicker.comments.copy()
+                new_docstrings = pycode.extract_all_comments(pyi_source).comments
                 # Add `real` module docstring dictionary if not in pyi module
                 for x in self.doc.values():
                     new_docstrings.setdefault(x.qualname, x.docstring)
@@ -1081,12 +1085,20 @@ class Module(Doc):
         """
         return self._filter_doc_objs(Class, sort)
 
-    def functions(self, sort=True) -> List['Function']:
+    def functions(self, sort=True, cls_level=False) -> List['Function']:
         """
         Returns all documented module-level functions in the module,
         optionally sorted alphabetically, as a list of `pdoc.Function`.
         """
-        return self._filter_doc_objs(Function, sort)
+        result = self._filter_doc_objs(Function, sort)
+        if cls_level:
+            result.extend([
+                dobj
+                for _ in self.classes()
+                for dobj in _.doc.values()
+                if isinstance(dobj, Function)
+            ])
+        return result
 
     def libraryattrs(self, sort=True) -> List['LibraryAttr']:
         return self._filter_doc_objs(LibraryAttr, sort) # type: ignore
@@ -1413,9 +1425,17 @@ class Function(Doc):
     """
     Representation of documentation for a function or method.
     """
-    __slots__ = ('cls',)
+    __slots__ = ('cls', 'overloads')
 
-    def __init__(self, name: str, module: Module, obj, *, cls: Class = None):
+    def __init__(
+        self,
+        name: str,
+        module: Module,
+        obj,
+        *,
+        cls: Class = None,
+        overloads: List[pycode.OverloadFunc] = None
+    ) -> None:
         """
         Same as `pdoc.Doc`, except `obj` must be a
         Python function object. The docstring is gathered automatically.
@@ -1434,6 +1454,8 @@ class Function(Doc):
         The `pdoc.Class` documentation object if the function is a method.
         If not, this is None.
         """
+
+        self.overloads = overloads
 
     @property
     def is_method(self) -> bool:
@@ -1720,10 +1742,9 @@ class Variable(Doc):
         if _is_descriptor(self.obj):
             obj = getattr(self.obj, 'fget', getattr(self.obj, '__get__', None))
         try:
-            lines, _ = inspect.getsourcelines(obj)
-        except (ValueError, TypeError, OSError):
+            return inspect.getsource(obj)
+        except (OSError, TypeError):
             return ''
-        return inspect.cleandoc(''.join(['\n'] + lines))
 
     @property
     def qualname(self) -> str:

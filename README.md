@@ -48,6 +48,8 @@
 
 - [ ] decorator
 
+- [ ] sort document by source
+
 - [ ] url link
 
 ## NoneBot 文档修正
