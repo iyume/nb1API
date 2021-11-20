@@ -6,6 +6,8 @@ from random import randint
 from inspect import Signature
 from dataclasses import dataclass
 
+from pdoc.utils import signature_repr
+
 
 T_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 
@@ -13,6 +15,7 @@ T_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef]
 @dataclass
 class OverloadFunc:
     signature: Signature
+    title: str  # repr of signature
     ast: T_Function
     docstring: Optional[str] = None
 
@@ -84,16 +87,6 @@ class OverloadPicker(ast.NodeVisitor):
             return f'{self.current_class.name}.{name}'
         return name
 
-    # def add_implement_for(self, name: str) -> None:
-    #     qualname = self.get_qualname_for(name)
-    #     if self.current_class:
-    #         clsobj = self.globals[self.current_class.name]
-    #         funcobj = getattr(clsobj, name)
-    #     else:
-    #         funcobj = self.globals[name]
-    #     if qualname not in self.implements:
-    #         self.implements[qualname] = funcobj
-
     def add_overload_signature(self, overload: OverloadFunc) -> None:
         if not self.current_function:
             return
@@ -105,6 +98,20 @@ class OverloadPicker(ast.NodeVisitor):
             raise TypeError(f'Unknown type: {type(unwrap_obj)}')
         signature = inspect.signature(unwrap_obj)
         overload.signature = signature
+
+    def add_overload_title(self, overload: OverloadFunc) -> None:
+        if not self.current_function:
+            return
+        node = self.current_function
+        if node.returns:
+            if (isinstance(node.returns, ast.Subscript) and
+                isinstance(node.returns.value, ast.Name) and
+                node.returns.value.id == 'Union' and  # commonly
+                isinstance(node.returns.slice, ast.Tuple)):
+                returns = [ast.unparse(_) for _ in node.returns.slice.elts]
+            else:
+                returns = [ast.unparse(node.returns)]
+            overload.title = signature_repr(overload.signature, returns)
 
     def add_overload_docstring(self, overload: OverloadFunc) -> None:
         if not self.current_function:
@@ -151,8 +158,13 @@ class OverloadPicker(ast.NodeVisitor):
             self.current_function = node
             self.context.append(node.name)
             if self.is_overload(node):
-                overload = OverloadFunc(signature=Signature(),ast=node)
+                overload = OverloadFunc(
+                    signature=Signature(),
+                    title='',
+                    ast=node
+                )
                 self.add_overload_signature(overload)
+                self.add_overload_title(overload)  # must call after self.add_overload_signature
                 self.add_overload_docstring(overload)
                 self.overloads.setdefault(qualname, []).append(overload)
             self.context.pop()

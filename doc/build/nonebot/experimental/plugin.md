@@ -55,11 +55,11 @@ Decorator to register a function as a command.
 
     ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
 
-## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)`
+## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/>
 
 - **说明**
 
-Implementation of on_natural_language overloads.
+将函数装饰为自然语言处理器。
 
 - **参数**
 
@@ -75,4 +75,4 @@ Implementation of on_natural_language overloads.
 
 - **返回**
 
-    unknown
+    Unknown

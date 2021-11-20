@@ -26,6 +26,8 @@ def signature_repr(sig: Signature, returns: Optional[List[str]] = None) -> str:
         if not replacement:
             if isinstance(value, enum.Enum):
                 replacement = str(value)
+            elif value is Ellipsis:
+                replacement = '...'
             elif inspect.isclass(value):
                 replacement = value.__name__
             elif ' at 0x' in repr(value):

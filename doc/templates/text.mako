@@ -2,7 +2,7 @@
 ## Available context includes `doc_utils`, `module`, `modules` and configs in `config.mako`
 
 <%
-from doc_utils import get_doc, get_title, get_version
+from doc_utils import get_doc, get_title, render_version
 from textwrap import indent
 %>
 
@@ -13,7 +13,7 @@ from textwrap import indent
 
 <%def name="render_params(p_lst)">
 % for p in p_lst:
-    - `${p.name}`${f' ({p.annotation})' if p.annotation else ''}${get_version(p)}${f': {indent(p.description, " " * 4).lstrip()}' if p.description else ''}
+    - `${p.name}`${f' ({p.annotation})' if p.annotation else ''}${render_version(p)}${f': {indent(p.description, " " * 4).lstrip()}' if p.description else ''}
 
 % endfor
 </%def>
@@ -26,8 +26,8 @@ ${doc.description}
 
 % endif
 
-% if hasattr(doc, 'require'):
-- **要求**${get_version(doc.require)}
+% if doc.require:
+- **要求**${render_version(doc.require)}
 
 % if doc.require.content:
 ${render_params(doc.require.content)}
@@ -37,10 +37,18 @@ ${doc.require}
 
 % endif
 % endif
-
 - **参数**
 
-% if doc.args.content:
+% if doc.args.overloads:
+    **重载:**
+
+% for i, (title, params) in enumerate(doc.args.overloads.items()):
+    ${i + 1}. `${title}`
+
+${render_params(params)}
+% endfor
+
+% elif doc.args.content:
 ${render_params(doc.args.content)}
 % else:
     无
@@ -54,18 +62,18 @@ ${render_params(doc.returns.content)}
     ${doc.returns}
 
 % endif
-% if hasattr(doc, 'raises'):
+% if doc.raises:
 - **异常**
 
 % if doc.raises.content:
 ${render_params(doc.raises.content)}
 
 % else:
-${doc.source}
+${doc.raises}
 
 % endif
 % endif
-% if hasattr(doc, 'examples'):
+% if doc.examples:
 - **用法**
 
 ${doc.examples}
@@ -74,7 +82,7 @@ ${doc.examples}
 
 <%def name="render_variable(doc, is_own=True)">
 % if is_own:
-- **类型:** ${doc.var_type}${get_version(getattr(doc, 'type_version', ''))}
+- **类型:** ${doc.var_type}${render_version(doc.type_version)}
 
 % if doc.description:
 % if '\n\n' in doc.description:
@@ -87,7 +95,7 @@ ${doc.description}
 
 % endif
 % endif
-% if hasattr(doc, 'examples'):
+% if doc.examples:
 - **用法**
 
 ${doc.examples}
@@ -95,7 +103,7 @@ ${doc.examples}
 
 % else:
 ## feature
-- **类型:** ${doc.var_type}${get_version(getattr(doc, 'type_version', ''))}
+- **类型:** ${doc.var_type}${render_version(doc.type_version)}
 
 - **说明:** 见父类文档
 
@@ -117,7 +125,7 @@ contentSidebar: true
 sidebarDepth: 0
 ---
 
-${h1(f"`{module.name}` {heading}")}${get_version(getattr(mod_doc, 'version', ''))}
+${h1(f"`{module.name}` {heading}")}${render_version(mod_doc.version)}
 
 ${mod_doc.description}
 
@@ -133,7 +141,7 @@ ${h2("子模块")}
 % if variables:
 % for v in variables:
 <% doc = get_doc(v) %>
-${h2(get_title(v))}${get_version(doc)}
+${h2(get_title(v))}${render_version(doc)}
 ${render_variable(doc)}
 % endfor
 % endif
@@ -142,7 +150,7 @@ ${render_variable(doc)}
 % if functions:
 % for f in functions:
 <% doc = get_doc(f) %>
-${h2(get_title(f))}${get_version(doc)}
+${h2(get_title(f))}${render_version(doc)}
 ${render_function(doc)}
 % endfor
 % endif
@@ -159,7 +167,7 @@ ${render_function(doc)}
     mro = c.mro()
     subclasses = c.subclasses()
 %>
-${h2(get_title(c))}${get_version(cls_doc)}
+${h2(get_title(c))}${render_version(cls_doc)}
 
 % if cls_doc.description:
 ${cls_doc.description}
@@ -175,8 +183,8 @@ ${h3('基类')}
 % endfor
 % endif
 
-% if hasattr(cls_doc, 'require'):
-- **要求**${get_version(cls_doc.require)}
+% if cls_doc.require:
+- **要求**${render_version(cls_doc.require)}
 
 % if cls_doc.require.content:
 ${render_params(cls_doc.require.content)}
@@ -196,7 +204,7 @@ ${render_params(cls_doc.args.content)}
 
 % endif
 
-% if hasattr(cls_doc, 'examples'):
+% if cls_doc.examples:
 - **用法**
 
 ${cls_doc.examples}
@@ -205,7 +213,7 @@ ${cls_doc.examples}
 % if class_vars:
 % for v in class_vars:
 <% doc = get_doc(v) %>
-${h3(get_title(v))}${get_version(doc)}
+${h3(get_title(v))}${render_version(doc)}
 ${render_variable(doc)}
 % endfor
 % endif
@@ -213,7 +221,7 @@ ${render_variable(doc)}
 % if inst_vars:
 % for v in inst_vars:
 <% doc = get_doc(v) %>
-${h3(get_title(v))}${get_version(doc)}
+${h3(get_title(v))}${render_version(doc)}
 ${render_variable(doc)}
 % endfor
 % endif
@@ -221,7 +229,7 @@ ${render_variable(doc)}
 % if class_static_methods:
 % for f in class_static_methods:
 <% doc = get_doc(f) %>
-${h3(get_title(f))}${get_version(doc)}
+${h3(get_title(f))}${render_version(doc)}
 ${render_function(doc)}
 % endfor
 % endif
@@ -229,7 +237,7 @@ ${render_function(doc)}
 % if methods:
 % for m in methods:
 <% doc = get_doc(m) %>
-${h3(get_title(m))}${get_version(doc)}
+${h3(get_title(m))}${render_version(doc)}
 ${render_function(doc)}
 % endfor
 % endif

@@ -39,7 +39,7 @@ try:
 except ImportError:
     __version__ = '???'  # Package not installed
 
-from pdoc import pycode
+from pdoc import pycode, utils
 from pdoc.pycode import formatannotation
 
 
@@ -1456,7 +1456,7 @@ class Function(Doc):
         If not, this is None.
         """
 
-        self.overloads = overloads
+        self.overloads = overloads or []
 
     @property
     def is_method(self) -> bool:

@@ -115,27 +115,35 @@ Decorator to register a function as a command.
 
     ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
 
-## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)`
+## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/>
 
 - **说明**
 
-Implementation of on_natural_language overloads.
+将函数装饰为自然语言处理器。
 
 - **参数**
 
-    - `keywords` (Iterable[str] | NoneType | str | (NLPSession) -> Awaitable[IntentCommand | None])
+    **重载:**
 
-    - `permission` ((SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool] | Iterable[(SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool]])
+    1. `(__func) -> NLPHandler_T`
 
-    - `only_to_me` (bool)
+    - `__func` ((NLPSession) -> Awaitable[IntentCommand | None]): 被装饰函数，必须为 async 函数
 
-    - `only_short_message` (bool)
+    2. `(keywords=..., *, permission=..., only_to_me=..., only_short_message=..., allow_empty_message=...) -> Callable[[NLPHandler_T], NLPHandler_T]`
 
-    - `allow_empty_message` (bool)
+    - `keywords` (Iterable[str] | str | NoneType): 要响应的关键词，若传入 `None`，则响应所有消息
+
+    - `permission` ((SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool] | Iterable[(SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool]]) <Badge text="1.9.0+"/>: 自然语言处理器所需要的权限，不满足权限的用户将无法触发该处理器。 若提供了多个，则默认使用 `aggregate_policy` 和其默认参数组合。 如果不传入该参数（即为默认的 `...`），则使用配置项中的 `DEFAULT_NLP_PERMISSION`
+
+    - `only_to_me` (bool): 是否只响应确定是在和「我」（机器人）说话的消息（在开头或结尾 @ 了机器人，或在开头称呼了机器人昵称）
+
+    - `only_short_message` (bool): 是否只响应短消息
+
+    - `allow_empty_message` (bool): 是否响应内容为空的消息（只有 @ 或机器人昵称）
 
 - **返回**
 
-    unknown
+    Unknown
 
 ## _def_ `on_notice(arg=None, *events)`
 

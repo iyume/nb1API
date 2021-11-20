@@ -13,9 +13,10 @@ Solution:
     `other similar block`:
         normally list of `name(annot) <badge>: desc`
 """
-from typing import Union, Optional, Callable, List, Tuple, Type
+from typing import Dict, Union, Optional, Callable, List, Tuple
 import re
 import inspect
+import dataclasses
 from textwrap import dedent
 from dataclasses import dataclass
 
@@ -23,30 +24,67 @@ import pdoc
 from pdoc.pycode import formatannotation
 
 
-T_Annotation = Optional[str]
-T_Version = Optional[str]
-T_Description = Optional[str]
+field_default_list = dataclasses.field(default_factory=list)
+field_default_dict = dataclasses.field(default_factory=dict)
 
+
+def render_version(
+    dsobj: Union[Optional[str], 'Docstring', 'DocstringSection', 'DocstringParam'],
+    prefix: str = ' ',
+    suffix: str = ''
+) -> str:
+    if not dsobj:
+        return ''
+    version = dsobj if isinstance(dsobj, str) else dsobj.version
+    if not version:
+        return ''
+    s = '{}<Badge text="{}"/>{}'
+    if version.endswith('-'):
+        s = '{}<Badge text="{}" type="error"/>{}'
+    return s.format(prefix, version, suffix)
+
+def render_description(
+    dsobj: Union[Optional[str], 'Docstring', 'DocstringParam'],
+    prefix: str = ': ',
+    suffix: str = ''
+) -> str:
+    if not dsobj:
+        return ''
+    desc = dsobj if isinstance(dsobj, str) else dsobj.description
+    return f'{prefix}{desc}{suffix}'
 
 @dataclass
 class DocstringParam:
-    """ dataclass for `args` and `attributes` or other similar block """
-    name: str
-    annotation: T_Annotation = None
-    version: T_Version = None  # third-level version
-    # default: Optional[str] = None  ## default value has been described in title
-    description: T_Description = ''
+    """
+    Common DocstringParam.
 
+    Represent `name (annotation) <badge>: desc`.
+    """
+    name: str
+    annotation: Optional[str] = None
+    version: Optional[str] = None  # third-level version
+    description: Optional[str] = None
 
 @dataclass
 class DocstringSection:
+    """
+    Common DocstringSection.
+
+    The class inherited from this is named `DocstringSection<identity.title()>`.
+    """
     identity: str
-    # empty when content parsed to nothing, that directly render source
-    content: List[DocstringParam]
+    # Empty content when it parsed to nothing, that directly render source
+    content: List[DocstringParam] = field_default_list
     source: str = ''
-    version: T_Version = None  # second-level version
-    def __str__(self):
+    version: Optional[str] = None  # second-level version
+    # key: the signature_repr overload in function.
+    overloads: Dict[str, List[DocstringParam]] = field_default_dict
+    def __str__(self) -> str:
         return self.source
+    def __bool__(self) -> bool:
+        if self.content or self.source:
+            return True
+        return False
 
 
 class Docstring:
@@ -77,19 +115,23 @@ class Docstring:
     short_desc: str
     long_desc: str
     description: str
-    type_version: str  # special in variable docstring
     args: DocstringSection
     returns: DocstringSection
     attributes: DocstringSection
     raises: DocstringSection
     examples: DocstringSection
     require: DocstringSection
-    version: T_Version  # top-level version
+    version: Optional[str]  # top-level version
+    type_version: Optional[str]  # special in variable docstring
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self) -> None:
         self.short_desc = ''
         self.long_desc = ''
         self.description = ''
+        for i in self._sections:
+            setattr(self, i, DocstringSection(i))
+        self.version = None
+        self.type_version = None
 
     def parse(self, text: str) -> None:
         if not text:
@@ -114,8 +156,11 @@ class Docstring:
                 if not name in set_:
                     continue
                 text_sec = dedent(text[seg]).strip()
-                section = DocstringSection(identity=identity,
-                        version=matches[i].group(2), content=[], source=text_sec)
+                section = DocstringSection(
+                    identity=identity,
+                    version=matches[i].group(2),
+                    source=text_sec
+                )
                 # try to call self-defined method
                 method_str = 'parse_' + identity
                 method = getattr(self, method_str, None)
@@ -188,59 +233,83 @@ class Docstring:
             args_sec = DocstringSection(
                 identity='args', content=get_func_params(mod.obj.__init__))
             if hasattr(self, 'args') and isinstance(self.args, DocstringSection):
-                args_sec = self._resolve_params(args_sec, self.args)
+                args_sec = self._resolve_section(args_sec, self.args)
             self.args = args_sec
-        elif isinstance(mod, pdoc.Function):
-            # reorganize `self.args` by sorting in order of `get_func_params`
-            # and add annotation for param if annotation exists
-            # resolve params
-            args_sec = DocstringSection(
-                identity='args', content=get_func_params(mod.obj))
-            if hasattr(self, 'args') and isinstance(self.args, DocstringSection):
-                args_sec = self._resolve_params(args_sec, self.args)
-            self.args = args_sec
-            # resolve returns when `Returns:` not write in docstring
-            if not getattr(self, 'returns', None):
-                return_anno = mod.return_annotation()
-                if not return_anno:
-                    return_anno = 'unknown'
-                self.returns = DocstringSection(identity='returns', content=[], source=return_anno)
         elif isinstance(mod, pdoc.Variable):
             self.var_type = mod.type_annotation()
 
     @staticmethod
-    def _resolve_params(sec1: DocstringSection, sec2: DocstringSection) -> DocstringSection:
+    def _resolve_params(
+        args1: List[DocstringParam],
+        args2: List[DocstringParam]
+    ) -> List[DocstringParam]:
         """
-        merge `sec1` and `sec2`.
-
-        `sec1` is auto-generated from source code, `sec2` is extracted from its docstring.
+        Merge args2's versions and descriptions to args1.
         """
-        if sec2.version:
-            sec1.version = sec2.version
         param_dict = {
             arg.name: (arg.version, arg.description)
-            for arg in sec2.content
+            for arg in args2
         }
-        for p in sec1.content:
-            p.version, p.description = param_dict.get(p.name, (None, ''))
+        for p in args1:
+            p.version, p.description = param_dict.get(p.name, (None, None))
+        return args1
+
+    @staticmethod
+    def _resolve_section(
+        sec1: DocstringSection,
+        sec2: DocstringSection
+    ) -> DocstringSection:
+        """
+        Merge two section.
+        """
+        sec1.version = sec2.version
+        sec1.content = Docstring._resolve_params(sec1.content, sec2.content)
         return sec1
 
 
-def get_func_params(obj: Type, str: bool = False) -> List[DocstringParam]:
-    """
-    this function will be merge to pdoc module
+class DocstringFunction(Docstring):
+    _sections = {
+        "args": { "Arguments", "Args", "Parameters", "Params", "参数" },
+        "returns": { "Return", "Returns", "返回" },
+        "raises": { "Raises", "Exceptions", "Except", "异常" },
+        "examples": { "Example", "Examples", "示例", "用法" },
+        "require": { "Require", "要求" },
+        "version": { "Version", "版本" }
+    }
 
-    Args:
-        str: return str from inspect.Parameter.__str__
-    """
-    signature = inspect.signature(obj)
+    def resolve(self, dobj: pdoc.Function) -> None:
+        args_sec = DocstringSection(
+            identity='args', content=get_func_params(dobj.obj))
+        if hasattr(self, 'args') and isinstance(self.args, DocstringSection):
+            args_sec = self._resolve_section(args_sec, self.args)
+        self.args = args_sec
+        # resolve returns when `Returns:` not write in docstring
+        if not getattr(self, 'returns', None):
+            return_anno = dobj.return_annotation()
+            if not return_anno:
+                return_anno = 'Unknown'
+            self.returns = DocstringSection(identity='returns', source=return_anno)
+        for overload in dobj.overloads:
+            params_lst = self.args.overloads.setdefault(overload.title, [])
+            args_sec1 = get_func_params(overload.signature)
+            args_sec2 = get_doc(overload.docstring or '').args.content
+            params_lst.extend(self._resolve_params(args_sec1, args_sec2))
+
+
+def get_func_params(obj: Union[Callable, inspect.Signature]) -> List[DocstringParam]:
+    signature = obj
+    if not isinstance(signature, inspect.Signature):
+        signature = inspect.signature(signature)
     result: List[DocstringParam] = []
     for p in signature.parameters.values():
         if p.name == 'self':
             continue
-        result.append(DocstringParam(
-            name=p.name,
-            annotation=formatannotation(p.annotation)))
+        result.append(
+            DocstringParam(
+                name=p.name,
+                annotation=formatannotation(p.annotation)
+            )
+        )
     return result
 
 def get_method_type(mod: pdoc.Function) -> str:
@@ -304,24 +373,18 @@ def get_title(mod: pdoc.Doc) -> str:
     prefix = ' '.join(prefix_builder)
     return f'_{prefix}_ `{body}`'
 
-def get_version(doc: Union[str, Docstring, DocstringSection, DocstringParam],
-                                prefix: str = ' ',suffix: str = '') -> str:
-    if isinstance(doc, str):
-        version = doc
+def get_doc(dobj: Union[str, pdoc.Doc]) -> Docstring:
+    """Simple factory to get a docstring object from different type."""
+    docstring = dobj if isinstance(dobj, str) else dobj.docstring
+    if isinstance(dobj, pdoc.Function):
+        dsobj = DocstringFunction()
+        dsobj.parse(docstring)
+        dsobj.resolve(dobj)
+        return dsobj
     else:
-        version = getattr(doc, 'version', '')
-    if not version:
-        return ''
-    s = '{}<Badge text="{}"/>{}'
-    if version.endswith('-'):
-        s = '{}<Badge text="{}" type="error"/>{}'
-    return s.format(prefix, version, suffix)
-
-def get_doc(mod: Union[str, pdoc.Doc]):
-    doc = Docstring()
-    docstring = mod if isinstance(mod, str) else mod.docstring
-    doc.parse(docstring)
-    if not isinstance(mod, (str, pdoc.LibraryAttr)):
-        # Do not resolve for LibraryAttr
-        doc.resolve(mod)
-    return doc
+        dsobj = Docstring()
+        dsobj.parse(docstring)
+        if not isinstance(dobj, (str, pdoc.LibraryAttr)):
+            # Do not resolve for LibraryAttr
+            dsobj.resolve(dobj)
+        return dsobj
