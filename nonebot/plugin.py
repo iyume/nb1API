@@ -744,8 +744,8 @@ def on_command(
 @overload
 def on_natural_language(__func: NLPHandler_T) -> NLPHandler_T:
     """
-    Decorator to register a function as a natural language processor with
-    default kwargs.
+    参数:
+        __func: 被装饰函数，必须为 async 函数
     """
 
 
@@ -759,13 +759,14 @@ def on_natural_language(
     allow_empty_message: bool = ...
 ) -> Callable[[NLPHandler_T], NLPHandler_T]:
     """
-    Decorator to register a function as a natural language processor.
-
-    :param keywords: keywords to respond to, if None, respond to all messages
-    :param permission: permission required by the processor
-    :param only_to_me: only handle messages to me
-    :param only_short_message: only handle short messages
-    :param allow_empty_message: handle empty messages
+    参数:
+        keywords: 要响应的关键词，若传入 `None`，则响应所有消息
+        permission(1.9.0+): 自然语言处理器所需要的权限，不满足权限的用户将无法触发该处理器。
+                        若提供了多个，则默认使用 `aggregate_policy` 和其默认参数组合。
+                        如果不传入该参数（即为默认的 `...`），则使用配置项中的 `DEFAULT_NLP_PERMISSION`
+        only_to_me: 是否只响应确定是在和「我」（机器人）说话的消息（在开头或结尾 @ 了机器人，或在开头称呼了机器人昵称）
+        only_short_message: 是否只响应短消息
+        allow_empty_message: 是否响应内容为空的消息（只有 @ 或机器人昵称）
     """
 
 
@@ -778,7 +779,9 @@ def on_natural_language(
     allow_empty_message: bool = False
 ):
     """
-    Implementation of on_natural_language overloads.
+    将函数装饰为自然语言处理器。
+
+    版本: 1.6.0+
     """
     real_permission = perm.aggregate_policy(permission) \
         if isinstance(permission, Iterable) else permission

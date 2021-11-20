@@ -810,6 +810,7 @@ class Module(Doc):
         # Find overload function from source code
         # Find stub file for a module or package
         if not self.is_namespace:
+
             overloads = pycode.extract_all_overloads(
                                     self.source, globals=module.__dict__).overloads
             for dobj in self.functions(cls_level=True):
