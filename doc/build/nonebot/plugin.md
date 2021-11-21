@@ -131,7 +131,7 @@ Decorator to register a function as a command.
 
     返回:
 
-        - `NLPHandler_T`
+        - `NLPHandler_T`: 测试自动文档
 
     2. `(keywords=..., *, permission=..., only_to_me=..., only_short_message=..., allow_empty_message=...) -> (NLPHandler_T) -> NLPHandler_T`
 
@@ -147,7 +147,9 @@ Decorator to register a function as a command.
 
     返回:
 
-        - `(NLPHandler_T) -> NLPHandler_T`
+        - `return1`: 测试返回示例
+
+        - `return2`: 测试返回示例
 
 ## _def_ `on_notice(arg=None, *events)`
 

@@ -746,6 +746,9 @@ def on_natural_language(__func: NLPHandler_T) -> NLPHandler_T:
     """
     参数:
         __func: 被装饰函数，必须为 async 函数
+
+    返回:
+        测试自动文档
     """
 
 
@@ -767,6 +770,10 @@ def on_natural_language(
         only_to_me: 是否只响应确定是在和「我」（机器人）说话的消息（在开头或结尾 @ 了机器人，或在开头称呼了机器人昵称）
         only_short_message: 是否只响应短消息
         allow_empty_message: 是否响应内容为空的消息（只有 @ 或机器人昵称）
+
+    返回:
+        return1: 测试返回示例
+        return2: 测试返回示例
     """
 
 
