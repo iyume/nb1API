@@ -4,6 +4,8 @@ import inspect
 from typing import List, Optional
 from inspect import Signature, Parameter
 
+from pdoc.pycode.annotransformer import formatannotation, convert_anno_new_style
+
 
 def signature_repr(sig: Signature, returns: Optional[List[str]] = None) -> str:
     """

@@ -6,7 +6,7 @@ from random import randint
 from inspect import Signature
 from dataclasses import dataclass
 
-from pdoc.utils import signature_repr
+from pdoc.utils import signature_repr, convert_anno_new_style
 
 
 T_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef]
@@ -18,6 +18,7 @@ class OverloadFunc:
     title: str  # repr of signature
     ast: T_Function
     docstring: Optional[str] = None
+    returns: str = ''
 
 
 def extract_all_overloads(
@@ -99,8 +100,12 @@ class OverloadPicker(ast.NodeVisitor):
         signature = inspect.signature(unwrap_obj)
         overload.signature = signature
 
-    def add_overload_title(self, overload: OverloadFunc) -> None:
-        if not self.current_function:
+    def add_overload_describe(self, overload: OverloadFunc) -> None:
+        """Add signature_repr and returns for overload."""
+        if (
+            not self.current_function or
+            overload.signature.return_annotation is Signature.empty
+        ):
             return
         node = self.current_function
         if node.returns:
@@ -111,7 +116,9 @@ class OverloadPicker(ast.NodeVisitor):
                 returns = [ast.unparse(_) for _ in node.returns.slice.elts]
             else:
                 returns = [ast.unparse(node.returns)]
+            returns = [convert_anno_new_style(s) for s in returns]
             overload.title = signature_repr(overload.signature, returns)
+            overload.returns = convert_anno_new_style(ast.unparse(node.returns))
 
     def add_overload_docstring(self, overload: OverloadFunc) -> None:
         if not self.current_function:
@@ -164,7 +171,7 @@ class OverloadPicker(ast.NodeVisitor):
                     ast=node
                 )
                 self.add_overload_signature(overload)
-                self.add_overload_title(overload)  # must call after self.add_overload_signature
+                self.add_overload_describe(overload)  # must call after self.add_overload_signature
                 self.add_overload_docstring(overload)
                 self.overloads.setdefault(qualname, []).append(overload)
             self.context.pop()

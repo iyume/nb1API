@@ -11,9 +11,9 @@ from textwrap import indent
 <%def name="h3(s)">### ${s}</%def>
 <%def name="h4(s)">#### ${s}</%def>
 
-<%def name="render_params(p_lst)">
+<%def name="render_params(p_lst, dedent_space=4)">
 % for p in p_lst:
-    - `${p.name}`${f' ({p.annotation})' if p.annotation else ''}${render_version(p)}${f': {indent(p.description, " " * 4).lstrip()}' if p.description else ''}
+${' ' * dedent_space}- `${p.name}`${f' ({p.annotation})' if p.annotation else ''}${render_version(p)}${f': {indent(p.description, " " * 4).lstrip()}' if p.description else ''}
 
 % endfor
 </%def>
@@ -42,10 +42,13 @@ ${doc.require}
 % if doc.args.overloads:
     **重载:**
 
-% for i, (title, params) in enumerate(doc.args.overloads.items()):
+% for i, (title, overload) in enumerate(doc.args.overloads.items()):
     ${i + 1}. `${title}`
 
-${render_params(params)}
+${render_params(overload.args, dedent_space=8)}
+    返回:
+
+${render_params(overload.returns, dedent_space=8)}
 % endfor
 
 % elif doc.args.content:
@@ -54,6 +57,8 @@ ${render_params(doc.args.content)}
     无
 
 % endif
+
+% if not doc.args.overloads:
 - **返回**
 
 % if doc.returns.content:
@@ -62,6 +67,8 @@ ${render_params(doc.returns.content)}
     ${doc.returns}
 
 % endif
+% endif
+
 % if doc.raises:
 - **异常**
 

@@ -13,7 +13,7 @@ Solution:
     `other similar block`:
         normally list of `name(annot) <badge>: desc`
 """
-from typing import Dict, Union, Optional, Callable, List, Tuple
+from typing import Dict, TypeVar, Union, Optional, Callable, List, Tuple
 import re
 import inspect
 import dataclasses
@@ -21,7 +21,7 @@ from textwrap import dedent
 from dataclasses import dataclass
 
 import pdoc
-from pdoc.pycode import formatannotation
+from pdoc.utils import formatannotation
 
 
 field_default_list = dataclasses.field(default_factory=list)
@@ -66,21 +66,30 @@ class DocstringParam:
     description: Optional[str] = None
 
 @dataclass
+class DocstringOverload:
+    args: List[DocstringParam] = field_default_list
+    returns: List[DocstringParam] = field_default_list
+
+@dataclass
 class DocstringSection:
     """
     Common DocstringSection.
 
     The class inherited from this is named `DocstringSection<identity.title()>`.
+
+    Attributes:
+        content: empty content when text parsed to nothing, that directly render source
+        overloads: key is the signature_repr, value is list of DocstringParam.
     """
     identity: str
-    # Empty content when it parsed to nothing, that directly render source
     content: List[DocstringParam] = field_default_list
     source: str = ''
+    overloads: Dict[str, DocstringOverload] = field_default_dict
     version: Optional[str] = None  # second-level version
-    # key: the signature_repr overload in function.
-    overloads: Dict[str, List[DocstringParam]] = field_default_dict
+
     def __str__(self) -> str:
         return self.source
+
     def __bool__(self) -> bool:
         if self.content or self.source:
             return True
@@ -129,7 +138,11 @@ class Docstring:
         self.long_desc = ''
         self.description = ''
         for i in self._sections:
-            setattr(self, i, DocstringSection(i))
+            if (anno := self.__class__.__annotations__.get(i, None)):
+                if anno is DocstringSection:
+                    setattr(self, i, DocstringSection(i))
+                continue
+            setattr(self, i, None)
         self.version = None
         self.type_version = None
 
@@ -284,16 +297,26 @@ class DocstringFunction(Docstring):
             args_sec = self._resolve_section(args_sec, self.args)
         self.args = args_sec
         # resolve returns when `Returns:` not write in docstring
-        if not getattr(self, 'returns', None):
+        if not self.returns:
             return_anno = dobj.return_annotation()
             if not return_anno:
                 return_anno = 'Unknown'
             self.returns = DocstringSection(identity='returns', source=return_anno)
         for overload in dobj.overloads:
-            params_lst = self.args.overloads.setdefault(overload.title, [])
-            args_sec1 = get_func_params(overload.signature)
-            args_sec2 = get_doc(overload.docstring or '').args.content
-            params_lst.extend(self._resolve_params(args_sec1, args_sec2))
+            current_overload = self.args.overloads.setdefault(
+                overload.title,
+                DocstringOverload()
+            )
+            dsobj = get_doc(overload.docstring or '')
+            args_fromtype = get_func_params(overload.signature)
+            args_fromstring = dsobj.args.content
+            current_overload.args = self._resolve_params(args_fromtype, args_fromstring)
+            returns = dsobj.returns.content or dsobj.returns.source
+            if isinstance(returns, str):
+                returns = [
+                    DocstringParam(overload.returns, description=returns)
+                ]
+            current_overload.returns = returns
 
 
 def get_func_params(obj: Union[Callable, inspect.Signature]) -> List[DocstringParam]:

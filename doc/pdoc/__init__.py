@@ -40,7 +40,7 @@ except ImportError:
     __version__ = '???'  # Package not installed
 
 from pdoc import pycode, utils
-from pdoc.pycode import formatannotation
+from pdoc.utils import formatannotation
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
