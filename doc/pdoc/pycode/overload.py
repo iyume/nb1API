@@ -4,21 +4,12 @@ from typing import Any, Callable, List, Dict, Union, Optional, get_args
 from copy import deepcopy
 from random import randint
 from inspect import Signature
-from dataclasses import dataclass
 
 from pdoc.utils import signature_repr, convert_anno_new_style
+from pdoc.schema import OverloadFunction
 
 
 T_Function = Union[ast.FunctionDef, ast.AsyncFunctionDef]
-
-
-@dataclass
-class OverloadFunc:
-    signature: Signature
-    title: str  # repr of signature
-    ast: T_Function
-    docstring: Optional[str] = None
-    returns: str = ''
 
 
 def extract_all_overloads(
@@ -46,7 +37,7 @@ class OverloadPicker(ast.NodeVisitor):
         self.context: List[str] = []
         self.current_function: Optional[T_Function] = None
         self.current_class: Optional[ast.ClassDef] = None
-        self.overloads: Dict[str, List[OverloadFunc]] = {}
+        self.overloads: Dict[str, List[OverloadFunction]] = {}
         self.globals: Dict[str, Any] = {}
         self.typing: List[str] = []
         self.typing_overload: List[str] = []
@@ -59,14 +50,20 @@ class OverloadPicker(ast.NodeVisitor):
         elif isinstance(source, dict):
             self.globals = source.copy()
 
-    def is_overload(self, node: T_Function) -> bool:
+    def is_overload(
+        self,
+        node: T_Function
+    ) -> bool:
         overload_ids = [f'{i}.overload' for i in self.typing] + self.typing_overload
         for decorator in node.decorator_list:
             if ast.unparse(decorator) in overload_ids:
                 return True
         return False
 
-    def exec_safety(self, node: T_Function) -> Callable:
+    def exec_safety(
+        self,
+        node: T_Function
+    ) -> Callable:
         """Safely exec source code by giving a random fake name."""
         node = deepcopy(node)
         newname = self.get_random_function_name()
@@ -76,7 +73,11 @@ class OverloadPicker(ast.NodeVisitor):
         exec(source, globals)
         return globals[newname]
 
-    def get_random_function_name(self, a: int = 0, b: int = 10000000) -> str:
+    def get_random_function_name(
+        self,
+        a: int = 0,
+        b: int = 10000000
+    ) -> str:
         """Generate random function name, maybe redundant."""
         s = f'nb1API{randint(a, b)}'
         while s in self.globals:
@@ -88,7 +89,7 @@ class OverloadPicker(ast.NodeVisitor):
             return f'{self.current_class.name}.{name}'
         return name
 
-    def add_overload_signature(self, overload: OverloadFunc) -> None:
+    def add_overload_signature(self, overload: OverloadFunction) -> None:
         if not self.current_function:
             return
         node = self.current_function
@@ -100,7 +101,7 @@ class OverloadPicker(ast.NodeVisitor):
         signature = inspect.signature(unwrap_obj)
         overload.signature = signature
 
-    def add_overload_describe(self, overload: OverloadFunc) -> None:
+    def add_overload_describe(self, overload: OverloadFunction) -> None:
         """Add signature_repr and returns for overload."""
         if (
             not self.current_function or
@@ -120,7 +121,7 @@ class OverloadPicker(ast.NodeVisitor):
             overload.title = signature_repr(overload.signature, returns)
             overload.returns = convert_anno_new_style(ast.unparse(node.returns))
 
-    def add_overload_docstring(self, overload: OverloadFunc) -> None:
+    def add_overload_docstring(self, overload: OverloadFunction) -> None:
         if not self.current_function:
             return
         node = self.current_function.body[0]
@@ -165,11 +166,7 @@ class OverloadPicker(ast.NodeVisitor):
             self.current_function = node
             self.context.append(node.name)
             if self.is_overload(node):
-                overload = OverloadFunc(
-                    signature=Signature(),
-                    title='',
-                    ast=node
-                )
+                overload = OverloadFunction(ast=node)
                 self.add_overload_signature(overload)
                 self.add_overload_describe(overload)  # must call after self.add_overload_signature
                 self.add_overload_docstring(overload)

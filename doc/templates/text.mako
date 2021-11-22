@@ -2,7 +2,7 @@
 ## Available context includes `doc_utils`, `module`, `modules` and configs in `config.mako`
 
 <%
-from doc_utils import get_doc, get_title, render_version
+from pdoc.doc_utils import get_doc, get_title, render_version
 from textwrap import indent
 %>
 

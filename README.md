@@ -84,7 +84,7 @@
 
 - [x] nonebot.command
 
-- [ ] nonebot.command.group (relate to `pyi` problem)
+- [x] nonebot.command.group (relate to `pyi` problem)
 
 - [x] nonebot.command.argfilter
 

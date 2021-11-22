@@ -13,10 +13,10 @@ Solution:
     `other similar block`:
         normally list of `name(annot) <badge>: desc`
 """
-from typing import Dict, TypeVar, Union, Optional, Callable, List, Tuple
 import re
 import inspect
 import dataclasses
+from typing import Dict, Union, Optional, Callable, List, Tuple
 from textwrap import dedent
 from dataclasses import dataclass
 
@@ -79,7 +79,7 @@ class DocstringSection:
 
     Attributes:
         content: empty content when text parsed to nothing, that directly render source
-        overloads: key is the signature_repr, value is list of DocstringParam.
+        overloads: key is the signature_repr, value is list of DocstringOverload.
     """
     identity: str
     content: List[DocstringParam] = field_default_list

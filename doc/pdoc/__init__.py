@@ -39,7 +39,9 @@ try:
 except ImportError:
     __version__ = '???'  # Package not installed
 
-from pdoc import pycode, utils
+import pdoc.pycode
+import pdoc.utils
+import pdoc.schema
 from pdoc.utils import formatannotation
 
 
@@ -811,7 +813,7 @@ class Module(Doc):
         # Find stub file for a module or package
         if not self.is_namespace:
 
-            overloads = pycode.extract_all_overloads(
+            overloads = pdoc.pycode.extract_all_overloads(
                                     self.source, globals=module.__dict__).overloads
             for dobj in self.functions(cls_level=True):
                 if dobj.qualname in overloads:
@@ -821,9 +823,9 @@ class Module(Doc):
             if pyi_path.exists():
                 with open(pyi_path) as f:
                     pyi_source = f.read()
-                overloads = pycode.extract_all_overloads(pyi_source).overloads
+                overloads = pdoc.pycode.extract_all_overloads(pyi_source).overloads
                 public_names = public_objs.keys()
-                new_docstrings = pycode.extract_all_comments(pyi_source).comments
+                new_docstrings = pdoc.pycode.extract_all_comments(pyi_source).comments
                 # Add `real` module docstring dictionary if not in pyi module
                 for x in self.doc.values():
                     new_docstrings.setdefault(x.qualname, x.docstring)
@@ -1435,7 +1437,7 @@ class Function(Doc):
         obj,
         *,
         cls: Class = None,
-        overloads: List[pycode.OverloadFunc] = None
+        overloads: List[pdoc.schema.OverloadFunction] = None
     ) -> None:
         """
         Same as `pdoc.Doc`, except `obj` must be a
