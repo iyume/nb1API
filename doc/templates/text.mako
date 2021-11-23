@@ -37,7 +37,7 @@ ${doc.require}
 
 % endif
 % endif
-- **参数**
+- **参数**${render_version(doc.args)}
 
 % if doc.args.overloads:
     **重载:**
@@ -59,7 +59,7 @@ ${render_params(doc.args.content)}
 % endif
 
 % if not doc.args.overloads:
-- **返回**
+- **返回**${render_version(doc.returns)}
 
 % if doc.returns.content:
 ${render_params(doc.returns.content)}
@@ -70,7 +70,7 @@ ${render_params(doc.returns.content)}
 % endif
 
 % if doc.raises:
-- **异常**
+- **异常**${render_version(doc.raises)}
 
 % if doc.raises.content:
 ${render_params(doc.raises.content)}
@@ -81,7 +81,7 @@ ${doc.raises}
 % endif
 % endif
 % if doc.examples:
-- **用法**
+- **用法**${render_version(doc.examples)}
 
 ${doc.examples}
 % endif
@@ -103,7 +103,7 @@ ${doc.description}
 % endif
 % endif
 % if doc.examples:
-- **用法**
+- **用法**${render_version(doc.examples)}
 
 ${doc.examples}
 % endif
@@ -202,7 +202,7 @@ ${cls_doc.require}
 % endif
 % endif
 
-- **参数**
+- **参数**${render_version(cls_doc.args)}
 
 % if cls_doc.args.content:
 ${render_params(cls_doc.args.content)}
@@ -212,7 +212,7 @@ ${render_params(cls_doc.args.content)}
 % endif
 
 % if cls_doc.examples:
-- **用法**
+- **用法**${render_version(cls_doc.examples)}
 
 ${cls_doc.examples}
 % endif

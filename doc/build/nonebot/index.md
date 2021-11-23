@@ -144,7 +144,7 @@ will work properly.
 
     无
 
-- **返回**
+- **返回** <Badge text="1.6.0+"/>
 
     Set[Plugin]: 加载成功的 Plugin 对象
 
@@ -166,7 +166,7 @@ nonebot.plugin.load_builtin_plugins()
 
     - `module_path` (str): 模块路径
 
-- **返回**
+- **返回** <Badge text="1.6.0+"/>
 
     Optional[Plugin]: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况：
         - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
@@ -205,7 +205,7 @@ else:
 
     - `module_prefix` (str): 模块前缀
 
-- **返回**
+- **返回** <Badge text="1.6.0+"/>
 
     Set[Plugin]: 加载成功的 Plugin 对象
 
