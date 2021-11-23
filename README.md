@@ -48,6 +48,8 @@
 
 - [ ] decorator
 
+    > In nonebot.plugin, _command_func._`args_parser`
+
 - [ ] sort document by source
 
 - [ ] url link
@@ -117,6 +119,16 @@
 - 函数的隐性参数。目前 API 自动生成旨在输出文档与源码保持一致，而隐性的参数传递，如通过 kwargs 传递的参数并不会写在源码，因此即便写了对应参数的文档也不会输出。
 
 - 变量的文档获取。当 `get_type_hints` 参数为模块，且模块下的变量含有 `ForwardRef` 会直接解析错误。`inspect.signature` 只适用函数。当前问题保留。
+
+- 参数文档解析的特殊情况
+
+    如 Union 类型的解释 (maybe feature request)
+
+    ```
+    - `state: bool | None`:
+        - `None(default)`: 切换状态，即 开 -> 关、关 -> 开
+        - `bool`: 切换至指定状态，`True` -> 开、`False` -> 关
+    ```
 
 ## Feature TODO
 

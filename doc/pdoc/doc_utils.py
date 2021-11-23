@@ -117,7 +117,7 @@ class Docstring:
     title_re = re.compile(
         "^("
         + "|".join({sec for _ in _sections.values() for sec in _})
-        + r")(?:\((.*?)\))?:",
+        + r") ?(?:\((.*?)\))?:",
         flags=re.M
     )
 
@@ -193,6 +193,10 @@ class Docstring:
     @staticmethod
     def _parse_params(s: str) -> List[DocstringParam]:
         """
+        Parse common params lines.
+
+        TODO: add regex factory to define the pattern.
+
         Example:
             ```
             arg1(1.1.0+): desc1

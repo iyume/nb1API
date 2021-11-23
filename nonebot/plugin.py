@@ -90,8 +90,6 @@ class Plugin:
                  event_handlers: Set[EventHandler] = ...,
                  msg_preprocessors: Set['MessagePreprocessor'] = ...,
                  lifetime_hooks: List[LifetimeHook] = ...):
-        """Creates a plugin with no name, no usage, and no handlers."""
-
         self.module = module
         self.name = name
         self.usage = usage
@@ -189,19 +187,28 @@ class Plugin:
 
 
 class PluginManager:
+    """插件管理器：用于管理插件的加载以及插件中命令、自然语言处理器、事件处理器的开关。"""
     _plugins: Dict[str, Plugin] = {}
 
     def __init__(self):
         self.cmd_manager = CommandManager()
+        """命令管理器实例。"""
         self.nlp_manager = NLPManager()
+        """自然语言管理器实例。"""
 
     @classmethod
     def add_plugin(cls, module_path: str, plugin: Plugin) -> None:
-        """Register a plugin
-        
-        Args:
-            module_path (str): module path
-            plugin (Plugin): Plugin object
+        """注册一个 `Plugin` 对象。
+
+        参数:
+            module_path: 模块路径
+            plugin: Plugin 对象
+
+        用法:
+            ```python
+            plugin = Plugin(module, name, usage, commands, nl_processors, event_handlers)
+            PluginManager.add_plugin("path.to.plugin", plugin)
+            ```
         """
         if module_path in cls._plugins:
             warnings.warn(f"Plugin {module_path} already exists")
@@ -210,29 +217,35 @@ class PluginManager:
 
     @classmethod
     def get_plugin(cls, module_path: str) -> Optional[Plugin]:
-        """Get plugin object by plugin module path
-        
-        Args:
-            module_path (str): Plugin module path
-        
-        Returns:
-            Optional[Plugin]: Plugin object
+        """获取一个已经注册的 `Plugin` 对象。
+
+        参数:
+            module_path: 模块路径
+
+        返回:
+            Optional[Plugin]: Plugin 对象
+
+        用法:
+            ```python
+            plugin = PluginManager.get_plugin("path.to.plugin")
+            ```
         """
         return cls._plugins.get(module_path, None)
 
     @classmethod
     def remove_plugin(cls, module_path: str) -> bool:
-        """Remove a plugin by plugin module path
-        
-        ** Warning: This function not remove plugin actually! **
-        ** Just remove command, nlprocessor, event handlers **
-        ** and message preprocessors, and deletes it from PluginManager **
+        """
+        删除 Plugin 中的所有命令、自然语言处理器、事件处理器并从插件管理器移除 Plugin 对象。
+        在 1.9.0 后，也会移除消息预处理器。
 
-        Args:
-            module_path (str): Plugin module path
+        ** Danger: **
+        这个方法实际并没有完全移除定义 Plugin 的模块。仅是移除其所注册的处理器。
 
-        Returns:
-            bool: Success or not
+        参数:
+            module_path: 模块路径
+
+        返回:
+            bool: 是否移除了插件
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -254,11 +267,22 @@ class PluginManager:
     def switch_plugin_global(cls,
                              module_path: str,
                              state: Optional[bool] = None) -> None:
-        """Change plugin state globally or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """
+        根据 `state` 更改 plugin 中 commands, nl_processors, event_handlers 的全局状态。
+        在 1.9.0 后，msg_preprocessors 的状态也会被更改。
+
+        ** Warning: **
+        更改插件状态并不会影响插件内 scheduler 等其他全局副作用状态
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            # 全局关闭插件 path.to.plugin , 对所有消息生效
+            PluginManager.switch_plugin_global("path.to.plugin", state=False)
+            ```
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -278,11 +302,17 @@ class PluginManager:
     def switch_command_global(cls,
                               module_path: str,
                               state: Optional[bool] = None) -> None:
-        """Change plugin command state globally or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 更改 plugin 中 commands 的全局状态。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            # 全局关闭插件 path.to.plugin 中所有命令, 对所有消息生效
+            PluginManager.switch_command_global("path.to.plugin", state=False)
+            ```
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -295,11 +325,23 @@ class PluginManager:
     def switch_nlprocessor_global(cls,
                                   module_path: str,
                                   state: Optional[bool] = None) -> None:
-        """Change plugin nlprocessor state globally or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 更改 plugin 中 nl_processors 的全局状态。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            from nonebot import message_preprocessor
+
+            # 全局关闭插件 path.to.plugin 中所有自然语言处理器, 对所有消息生效
+            PluginManager.switch_nlprocessor_global("path.to.plugin", state=False)
+
+            @message_preprocessor
+            async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+                plugin_manager.switch_nlprocessor_global("path.to.plugin", state=False)
+            ```
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -312,11 +354,17 @@ class PluginManager:
     def switch_eventhandler_global(cls,
                                    module_path: str,
                                    state: Optional[bool] = None) -> None:
-        """Change plugin event handler state globally or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 更改 plugin 中 event handlers 的全局状态。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            # 全局关闭插件 path.to.plugin 中所有事件处理器, 对所有消息生效
+            PluginManager.switch_eventhandler_global("path.to.plugin", state=False)
+            ```
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -329,12 +377,19 @@ class PluginManager:
     def switch_messagepreprocessor_global(cls,
                                           module_path: str,
                                           state: Optional[bool] = None) -> None:
-        """Change plugin message preprocessor state globally or simply switch it if `state`
-        is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 更改 plugin 中 message preprocessors 的全局状态。
+
+        版本: 1.9.0+
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            # 全局关闭插件 path.to.plugin 中所有消息预处理器, 对所有消息生效
+            PluginManager.switch_messagepreprocessor_global("path.to.plugin", state=False)
+            ```
         """
         plugin = cls.get_plugin(module_path)
         if not plugin:
@@ -347,17 +402,21 @@ class PluginManager:
     def switch_plugin(self,
                       module_path: str,
                       state: Optional[bool] = None) -> None:
-        """Change plugin state or simply switch it if `state` is None
-        
-        Tips:
-            This method will only change the state of the plugin's
-            commands and natural language processors since changing
-            state of the event handler for message and changing other message
-            preprocessors are meaningless (needs discussion).
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 修改 plugin 中的 commands 和 nlprocessors 状态。仅对当前消息有效。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            from nonebot import message_preprocessor
+
+            # 关闭插件 path.to.plugin , 仅对当前消息生效
+            @message_preprocessor
+            async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+                plugin_manager.switch_plugin("path.to.plugin", state=False)
+            ```
         """
         plugin = self.get_plugin(module_path)
         if not plugin:
@@ -371,11 +430,21 @@ class PluginManager:
     def switch_command(self,
                        module_path: str,
                        state: Optional[bool] = None) -> None:
-        """Change plugin command state or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 修改 plugin 中 commands 的状态。仅对当前消息有效。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            from nonebot import message_preprocessor
+
+            # 关闭插件 path.to.plugin 中所有命令, 仅对当前消息生效
+            @message_preprocessor
+            async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+                plugin_manager.switch_command("path.to.plugin", state=False)
+            ```
         """
         plugin = self.get_plugin(module_path)
         if not plugin:
@@ -387,11 +456,21 @@ class PluginManager:
     def switch_nlprocessor(self,
                            module_path: str,
                            state: Optional[bool] = None) -> None:
-        """Change plugin nlprocessor state or simply switch it if `state` is None
-        
-        Args:
-            module_path (str): Plugin module path
-            state (Optional[bool]): State to change to. Defaults to None.
+        """根据 `state` 修改 plugin 中 nl_processors 的状态。仅对当前消息有效。
+
+        参数:
+            module_path: 模块路径
+            state: 切换至指定状态，`True` -> 开、`False` -> 关
+
+        用法:
+            ```python
+            from nonebot import message_preprocessor
+
+            # 关闭插件 path.to.plugin 中所有自然语言处理器, 仅对当前消息生效
+            @message_preprocessor
+            async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+                plugin_manager.switch_nlprocessor("path.to.plugin", state=False)
+            ```
         """
         plugin = self.get_plugin(module_path)
         if not plugin:
@@ -493,15 +572,38 @@ def _load_plugin(module_path: str, act: str) -> Optional[Plugin]:
 
 
 def load_plugin(module_path: str) -> Optional[Plugin]:
-    """Load a module as a plugin
-    
-    Args:
-        module_path (str): path of module to import
-    
-    Returns:
-        Optional[Plugin]: Plugin object loaded, which can be awaited if
-                          the caller wishes to wait for async loading
-                          callbacks if there is any, or None loading fails
+    """
+    加载插件（等价于导入模块）。
+
+    此函数会调用插件中由 `on_plugin('loading')` 装饰器注册的函数（下称 「加载回调」），之后再添加插件中注册的处理器（如命令等）。
+
+    参数:
+        module_path: 模块路径
+
+    返回 (1.6.0+):
+        Optional[Plugin]: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况：
+                - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
+                - 插件定义了异步加载回调，但 `load_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
+                - 插件定义了异步加载回调，但 `load_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会先执行部分同步的加载回调
+                    - 如果成功，返回一个插件对象。返回值可以被 await，行为为等待剩余的异步加载完毕然后返回插件本身，或如果在 await 中发生了错误，返回 `None`
+                    - 如果失败，返回 `None`
+
+    用法:
+        ```python
+        nonebot.plugin.load_plugin('ai_chat')
+        ```
+
+        加载 `ai_chat` 插件。
+
+        ```python
+        # 此写法是通用的，即使插件没有异步的加载回调
+        p = nonebot.plugin.load_plugin('my_own_plugin')
+        if p is not None and await p is not None:
+            # 插件成功加载完成
+        else:
+            # 插件加载失败
+        ```
+        加载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
     """
     return _load_plugin(module_path, 'import and load')
 
@@ -564,47 +666,96 @@ def _unload_plugin(module_path: str,
 
 
 def unload_plugin(module_path: str) -> Optional[Plugin]:
-    """Unloads a plugin.
+    """
+    卸载插件，即移除插件的 commands, nlprocessors, event handlers 和 message preprocessors，运行由 `on_plugin('unloaded')` 注册的函数（下称 「卸载回调」），并将已导入的模块移除。
 
-    This deletes its entry in sys.modules if present. However, if the module
-    had additional side effects other than defining processors, they are not
-    undone.
-    
-    Args:
-        module_path (str): import path to module, which is already imported
+    ** Danger: **
+    该函数为强制卸载，如果使用不当，可能导致不可预测的错误！（如引用已经被卸载的模块变量）
 
-    Returns:
-        Optional[Plugin]: Stale Plugin (which can be awaited if the caller
-                          wishes to wait for async unloaded callbacks if there
-                          is any) if it was unloaded, None if it were not
-                          loaded
+    此函数不会回滚已导入模块中产生过的其他副作用（比如已计划的任务，aiocqhttp 中注册的处理器等）。
+
+    版本: 1.9.0+
+
+    参数:
+        module_path: 模块路径
+
+    返回:
+        Optional[Plugin]: 执行卸载后遗留的 `Plugin` 对象，或 `None` 如果插件不存在。根据插件组成不同，`Plugin` 返回值包含如下情况：
+                - 插件没有定义卸载回调，或只定义了同步的卸载回调：此函数会卸载处理器并执行回调，在卸载完毕后返回遗留的插件对象，其可以被 await，行为为直接返回此插件本身。
+                - 插件定义了异步卸载回调，但 `unload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
+                - 插件定义了异步卸载回调，但 `unload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。此对象可以被 await，行为为等待剩余的异步卸载回调执行完毕然后返回此插件本身。
+                - 在此之后此返回值将不再有用
+
+    用法:
+        ```python
+        nonebot.plugin.unload_plugin('ai_chat')
+        ```
+
+        卸载 `ai_chat` 插件。
+
+        ```python
+        # 此写法是通用的，即使插件没有异步的卸载回调
+        p = nonebot.plugin.unload_plugin('my_own_plugin')
+        if p is not None:
+            await p
+        ```
+        卸载 `my_own_plugin` 插件，并且等待其异步的卸载回调（如果有）执行完成。
     """
     return _unload_plugin(module_path, None)
 
 
 def reload_plugin(module_path: str) -> Optional[Plugin]:
-    """A combination of unload and load of a plugin.
-    
-    Args:
-        module_path (str): import path to module, which is already imported
+    """重载插件，也就是先 `unload_plugin`，再 `load_plugin`。
 
-    Returns:
-        Optional[Plugin]: The return value is special, please see the doc
+    ** Danger: **
+    该函数为强制重载，如果使用不当，可能导致不可预测的错误！
+
+    参数:
+        module_path: 模块路径
+
+    返回:
+        Optional[Plugin]: 重载后生成的 Plugin 对象。根据插件组成不同，返回值包含如下情况：
+                - 插件没有定义或只定义了同步的加载/卸载回调（此为 1.9.0 前的唯一情况）：此函数会执行两个步骤的回调，在重载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
+                - 插件定义了异步的回调，但 `reload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
+                - 插件定义了异步的回调，但 `reload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。返回值可以被 await，行为为等待剩余的异步卸载完毕并且加载新插件完毕后然后返回新的插件对象，或如果在 await 中发生了错误，返回 `None`
+
+    用法:
+        ```python
+        nonebot.plugin.reload_plugin('ai_chat')
+        ```
+
+        重载 `ai_chat` 插件。
+
+        ```python
+        # 此写法是通用的，即使插件没有异步的回调
+        p = nonebot.plugin.reload_plugin('my_own_plugin')
+        if p is not None and (p := await p) is not None:
+            # 插件成功加载完成
+        else:
+            # 插件加载失败
+        ```
+        重载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
     """
     # NOTE: consider importlib.reload()
     return _unload_plugin(module_path, lambda: _load_plugin(module_path, 'reload'))
 
 
 def load_plugins(plugin_dir: str, module_prefix: str) -> Set[Plugin]:
-    """Find all non-hidden modules or packages in a given directory,
-    and import them with the given module prefix.
+    """查找指定路径（相对或绝对）中的非隐藏模块（隐藏模块名字以 `_` 开头）并通过指定的模块前缀导入。其返回值的表现与 `load_plugin` 一致。
 
-    Args:
-        plugin_dir (str): Plugin directory to search
-        module_prefix (str): Module prefix used while importing
+    参数:
+        plugin_dir: 插件目录
+        module_prefix: 模块前缀
 
-    Returns:
-        Set[Plugin]: Set of plugin objects successfully loaded
+    返回 (1.6.0+):
+        Set[Plugin]: 加载成功的 Plugin 对象
+
+    用法:
+        ```python
+        nonebot.plugin.load_plugins(path.join(path.dirname(__file__), 'plugins'), 'plugins')
+        ```
+
+        加载 `plugins` 目录下的插件。
     """
 
     count = set()
@@ -630,7 +781,15 @@ def load_plugins(plugin_dir: str, module_prefix: str) -> Set[Plugin]:
 
 def load_builtin_plugins() -> Set[Plugin]:
     """
-    Load built-in plugins distributed along with "nonebot" package.
+    加载内置插件。
+
+    返回 (1.6.0+):
+        Set[Plugin]: 加载成功的 Plugin 对象
+
+    用法:
+        ```python
+        nonebot.plugin.load_builtin_plugins()
+        ```
     """
     plugin_dir = os.path.join(os.path.dirname(__file__), 'plugins')
     return load_plugins(plugin_dir, 'nonebot.plugins')
@@ -638,19 +797,56 @@ def load_builtin_plugins() -> Set[Plugin]:
 
 def get_loaded_plugins() -> Set[Plugin]:
     """
-    Get all plugins loaded.
+    获取已经加载的插件集合。
 
-    :return: a set of Plugin objects
+    返回:
+        Set[Plugin]: 加载成功的 Plugin 对象
+
+    用法:
+        ```python
+        plugins = nonebot.plugin.get_loaded_plugins()
+        await session.send('我现在支持以下功能：\\n\\n' +
+                            '\\n'.join(map(lambda p: p.name, filter(lambda p: p.name, plugins))))
+        ```
     """
     return set(PluginManager._plugins.values())
 
 
 def on_plugin(timing: str) -> Callable[[PluginLifetimeHook_T], PluginLifetimeHook_T]:
     """
-    Decorator to register a function as a callback for plugin lifetime events.
+    将函数设置为插件生命周期的回调函数。注册的加载回调会在调用 `load_plugin` 时被调用，注册的卸载回调会在调用 `unload_plugin` 时被调用。
 
-    Args:
-        timing (str): Either 'loading' or 'unloaded'
+    版本: 1.9.0+
+
+    参数:
+        timing: `"loading"` 表示注册加载回调，`"unloaded"` 表示注册卸载回调
+
+    要求:
+        被装饰函数可为同步或异步（async def）函数，必须不接受参数，其返回值会被忽略:
+
+        ```python
+        def func():
+            pass
+
+        async def func():
+            pass
+        ```
+
+        被 `on_plugin('unloaded')` 装饰的函数必须不能抛出 `Exception`，否则卸载时的行为将不能保证。
+
+    用法:
+        ```python
+        necessary_info = []
+
+        @on_plugin('loading')
+        async def _():
+            logger.info('正在加载插件...')
+            async with httpx.AsyncClient() as client:
+                r = await client.get('https://api.github.com/repos/nonebot/nonebot')
+                necessary_info.append(r.json())
+        ```
+
+        注册一个加载回调为插件的加载做准备工作。
     """
     def deco(func: PluginLifetimeHook_T):
         if Plugin.GlobalTemp.now_within_plugin:
@@ -677,21 +873,44 @@ def on_command(
     session_class: Optional[Type[CommandSession]] = None
 ) -> Callable[[CommandHandler_T], CommandHandler_T]:
     """
-    Decorator to register a function as a command.
+    将函数装饰为命令处理器 `CommandHandler_T` 。
 
-    :param name: command name (e.g. 'echo' or ('random', 'number'))
-    :param aliases: aliases of command name, for convenient access
-    :param patterns: custom regex pattern for the command.
-           Please use this carefully. Abuse may cause performance problem.
-           Also, Please notice that if a message is matched by this method,
-           it will use the full command as session current_arg.
-    :param permission: permission required by the command
-    :param only_to_me: only handle messages to me
-    :param privileged: can be run even when there is already a session
-    :param shell_like: use shell-like syntax to split arguments
-    :param expire_timeout: will override SESSION_EXPIRE_TIMEOUT if provided
-    :param run_timeout: will override SESSION_RUN_TIMEOUT if provided
-    :param session_class: session class
+    被装饰的函数将会获得一个 `args_parser` 属性，是一个装饰器，下面会有详细说明。
+
+    版本: 1.6.0+
+
+    参数:
+        name: 命令名，如果传入的是字符串则会自动转为元组
+        aliases: 命令别名
+        patterns(1.7.0+): 正则匹配，可以传入正则表达式或正则表达式组，来对整条命令进行匹配
+                **注意:** 滥用正则表达式可能会引发性能问题，请优先使用普通命令。
+                    另外一点需要注意的是，由正则表达式匹配到的匹配到的命令，`session` 中的 `current_arg` 会是整个命令，而不会删除匹配到的内容，以满足一些特殊需求。
+        permission(1.9.0+): 命令所需要的权限，不满足权限的用户将无法触发该命令。
+                若提供了多个，则默认使用 `aggregate_policy` 和其默认参数组合。
+                如果不传入该参数（即为默认的 `...`），则使用配置项中的 `DEFAULT_COMMAND_PERMISSION`
+        only_to_me: 是否只响应确定是在和「我」（机器人）说话的命令（在开头或结尾 @ 了机器人，或在开头称呼了机器人昵称）
+        privileged: 是否特权命令，若是，则无论当前是否有命令会话正在运行，都会运行该命令，但运行不会覆盖已有会话，也不会保留新创建的会话
+        shell_like: 是否使用类 shell 语法，若是，则会自动使用 `shlex` 模块进行分割（无需手动编写参数解析器），分割后的参数列表放入 `session.args['argv']`
+        expire_timeout(1.8.2+): 命令过期时间。如果不传入该参数（即为默认的 `...`），则使用配置项中的 `SESSION_EXPIRE_TIMEOUT`，如果提供则使用提供的值。
+        run_timeout(1.8.2+): 命令会话的运行超时时长。如果不传入该参数（即为默认的 `...`），则使用配置项中的 `SESSION_RUN_TIMEOUT`，如果提供则使用提供的值。
+        session_class(1.7.0+): 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
+
+    要求:
+        被装饰函数必须是一个 async 函数，且必须接收且仅接收一个位置参数，类型为 `CommandSession`，即形如：
+
+        ```python
+        async def func(session: CommandSession):
+            pass
+        ```
+
+    用法:
+        ```python
+        @on_command('echo', aliases=('复读',), permission=lambda sender: sender.is_superuser)
+        async def _(session: CommandSession):
+            await session.send(session.current_arg)
+        ```
+
+        一个仅对超级用户生效的复读命令。
     """
     real_permission = perm.aggregate_policy(permission) \
         if isinstance(permission, Iterable) else permission
@@ -862,6 +1081,37 @@ def on_notice(*events: str) -> Callable[[NoticeHandler_T], NoticeHandler_T]: ...
 on_notice = _make_event_deco('notice')  # type: ignore[override]
 
 
+on_notice.__doc__ = """
+将函数装饰为通知处理器。
+
+版本: 1.6.0+
+
+参数:
+    events: 要处理的通知类型（`notice_type`），若不传入，则处理所有通知
+
+要求:
+    被装饰函数必须是一个 async 函数，且必须接收且仅接收一个位置参数，类型为 `NoticeSession`，即形如：
+
+    ```python
+    async def func(session: NoticeSession):
+        pass
+    ```
+
+用法:
+    ```python
+    @on_notice
+    async def _(session: NoticeSession):
+        logger.info('有新的通知事件：%s', session.event)
+
+    @on_notice('group_increase')
+    async def _(session: NoticeSession):
+        await session.send('欢迎新朋友～')
+    ```
+
+    收到所有通知时打日志，收到新成员进群通知时除了打日志还发送欢迎信息。
+"""
+
+
 @overload
 def on_request(__func: RequestHandler_T) -> RequestHandler_T: ...  # type: ignore
 
@@ -871,6 +1121,37 @@ def on_request(*events: str) -> Callable[[RequestHandler_T], RequestHandler_T]: 
 
 
 on_request = _make_event_deco('request')  # type: ignore[override]
+
+
+on_request.__doc__ = """
+将函数装饰为请求处理器。
+
+版本: 1.6.0+
+
+参数:
+    events: 要处理的请求类型（`request_type`），若不传入，则处理所有请求
+
+要求:
+    被装饰函数必须是一个 async 函数，且必须接收且仅接收一个位置参数，类型为 `RequestSession`，即形如：
+
+    ```python
+    async def func(session: RequestSession):
+        pass
+    ```
+
+用法:
+    ```python
+    @on_request
+    async def _(session: RequestSession):
+        logger.info('有新的请求事件：%s', session.event)
+
+    @on_request('group')
+    async def _(session: RequestSession):
+        await session.approve()
+    ```
+
+    收到所有请求时打日志，收到群请求时除了打日志还同意请求。
+"""
 
 
 __all__ = [
