@@ -232,7 +232,7 @@ __all__ = [
     'unescape',
 ]
 
-__pdoc__ = {
+__autodoc__ = {
     'MessageSegment': """
         从 `aiocqhttp.message` 模块导入，继承自 `dict`，用于表示一个消息段。该类型是合法的 `Message_T`。
 

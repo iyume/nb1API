@@ -175,6 +175,6 @@ __all__ = [
     'SenderRoles',
 ]
 
-__pdoc__ = {
+__autodoc__ = {
     'nonebot.plugins': False
 }

@@ -16,7 +16,7 @@ __all__ = [
     'Scheduler',
 ]
 
-__pdoc__ = {
+__autodoc__ = {
     'Scheduler': """
         继承自 `apscheduler.schedulers.asyncio.AsyncIOScheduler` 类，功能不变。
 

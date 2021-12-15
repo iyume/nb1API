@@ -4,7 +4,7 @@ __all__ = [
     'CQHttpError',
 ]
 
-__pdoc__ = {
+__autodoc__ = {
     'CQHttpError': """
         等价于 `aiocqhttp.Error`。
         """

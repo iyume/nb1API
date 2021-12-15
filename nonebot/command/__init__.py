@@ -1118,7 +1118,7 @@ __all__ = [
     'CommandGroup',
 ]
 
-__pdoc__ = {
+__autodoc__ = {
     'CommandSession.event': False,
     'CommandSession.running': False,
     'CommandSession.waiting': False,
