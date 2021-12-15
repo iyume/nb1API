@@ -7,7 +7,7 @@ sidebarDepth: 0
 
 提供几种常用的转换器。
 
-## _def_ `simple_chinese_to_bool(text)`
+## _def_ `simple_chinese_to_bool(text)` {#simple_chinese_to_bool}
 
 - **说明**
 
@@ -19,9 +19,9 @@ sidebarDepth: 0
 
 - **返回**
 
-    bool | None
+    - `bool | None`
 
-## _def_ `split_nonempty_lines(text)`
+## _def_ `split_nonempty_lines(text)` {#split_nonempty_lines}
 
 - **说明**
 
@@ -33,9 +33,9 @@ sidebarDepth: 0
 
 - **返回**
 
-    list[str]
+    - `list[str]`
 
-## _def_ `split_nonempty_stripped_lines(text)`
+## _def_ `split_nonempty_stripped_lines(text)` {#split_nonempty_stripped_lines}
 
 - **说明**
 
@@ -47,4 +47,4 @@ sidebarDepth: 0
 
 - **返回**
 
-    list[str]
+    - `list[str]`

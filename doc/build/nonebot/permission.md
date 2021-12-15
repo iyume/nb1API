@@ -36,55 +36,33 @@ async def _(session: NLPSession):
     return IntentCommand('weather', 100.0)
 ```
 
-## _var_ `DISCUSS`
+## _async def_ `check_permission(bot, event, policy)` {#check_permission}
 
-- **类型:** 
+- **说明**
 
-## _var_ `EVERYBODY`
+检查用户是否具有所要求的权限。
 
-- **类型:** 
+一般用户应该没有必要使用该函数。
 
-## _var_ `GROUP`
+- **参数**
 
-- **类型:** 
+    - `bot` ([NoneBot](index.md#NoneBot)): NoneBot 对象
 
-## _var_ `GROUP_ADMIN`
+    - `event` (aiocqhttp.event.Event): 消息事件对象
 
-- **类型:** 
+    - `policy` ((SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool]) <Badge text="1.9.0+"/>: 返回布尔值的权限检查策略
 
-## _var_ `GROUP_MEMBER`
+- **返回**
 
-- **类型:** 
+    - `bool`: 消息事件所对应的上下文是否具有所要求的权限
 
-## _var_ `GROUP_OWNER`
+- **用法**
 
-- **类型:** 
+```python
+has_perm = await check_permission(bot, event, normal_group_member)
+```
 
-## _var_ `PRIVATE`
-
-- **类型:** 
-
-## _var_ `PRIVATE_DISCUSS`
-
-- **类型:** 
-
-## _var_ `PRIVATE_FRIEND`
-
-- **类型:** 
-
-## _var_ `PRIVATE_GROUP`
-
-- **类型:** 
-
-## _var_ `PRIVATE_OTHER`
-
-- **类型:** 
-
-## _var_ `SUPERUSER`
-
-- **类型:** 
-
-## _def_ `aggregate_policy(policies, aggregator=<built-in function all>)` <Badge text="1.9.0+"/>
+## _def_ `aggregate_policy(policies, aggregator=<built-in function all>)` <Badge text="1.9.0+"/> {#aggregate_policy}
 
 - **说明**
 
@@ -116,121 +94,87 @@ policy2 = aggregate_policy(lambda sender: sender.is_groupchat,
                             lambda sender: sender.from_group(123456789))
 ```
 
-## _async def_ `check_permission(bot, event, policy)`
+## _class_ `SenderRoles()` <Badge text="1.9.0+"/> {#SenderRoles}
 
 - **说明**
 
-检查用户是否具有所要求的权限。
-
-一般用户应该没有必要使用该函数。
-
-- **参数**
-
-    - `bot` (nonebot.NoneBot): NoneBot 对象
-
-    - `event` (aiocqhttp.event.Event): 消息事件对象
-
-    - `policy` ((SenderRoles) -> bool | (SenderRoles) -> Awaitable[bool]) <Badge text="1.9.0+"/>: 返回布尔值的权限检查策略
-
-- **返回**
-
-    - `bool`: 消息事件所对应的上下文是否具有所要求的权限
-
-- **用法**
-
-```python
-has_perm = await check_permission(bot, event, normal_group_member)
-```
-
-## _class_ `SenderRoles(bot, event, sender)` <Badge text="1.9.0+"/>
-
 封装了原生的 `CQEvent` 便于权限检查。此类的实例一般会传入 `PermissionPolicy_T` 作为参数。
 
-### 基类
-
-* builtins.tuple
-
-- **参数**
-
-    - `args`
-
-    - `kwargs`
-
-### _instance-var_ `bot`
+### _class-var_ `bot` {#SenderRoles.bot}
 
 - **类型:** nonebot.NoneBot
 
-### _instance-var_ `event`
+### _class-var_ `event` {#SenderRoles.event}
 
 - **类型:** aiocqhttp.event.Event
 
-### _property_ `is_admin`
+### _property_ `is_admin` {#SenderRoles.is_admin}
 
 - **类型:** bool
 
 - **说明:** 发送者是群管理员。
 
-### _property_ `is_anonymous`
+### _property_ `is_anonymous` {#SenderRoles.is_anonymous}
 
 - **类型:** bool
 
 - **说明:** 消息是匿名消息。
 
-### _property_ `is_discusschat`
+### _property_ `is_discusschat` {#SenderRoles.is_discusschat}
 
 - **类型:** bool
 
 - **说明:** 消息是讨论组消息。
 
-### _property_ `is_groupchat`
+### _property_ `is_groupchat` {#SenderRoles.is_groupchat}
 
 - **类型:** bool
 
 - **说明:** 消息是群聊消息。
 
-### _property_ `is_owner`
+### _property_ `is_owner` {#SenderRoles.is_owner}
 
 - **类型:** bool
 
 - **说明:** 发送者是群主。
 
-### _property_ `is_private_discuss`
+### _property_ `is_private_discuss` {#SenderRoles.is_private_discuss}
 
 - **类型:** bool
 
 - **说明:** 消息是讨论组私聊消息。
 
-### _property_ `is_private_friend`
+### _property_ `is_private_friend` {#SenderRoles.is_private_friend}
 
 - **类型:** bool
 
 - **说明:** 消息是好友私聊消息。
 
-### _property_ `is_private_group`
+### _property_ `is_private_group` {#SenderRoles.is_private_group}
 
 - **类型:** bool
 
 - **说明:** 消息是群私聊消息。
 
-### _property_ `is_privatechat`
+### _property_ `is_privatechat` {#SenderRoles.is_privatechat}
 
 - **类型:** bool
 
 - **说明:** 消息是私聊消息。
 
-### _property_ `is_superuser`
+### _property_ `is_superuser` {#SenderRoles.is_superuser}
 
 - **类型:** bool
 
 - **说明:** 发送者是配置文件中设置的超级用户。
 
-### _instance-var_ `sender`
+### _class-var_ `sender` {#SenderRoles.sender}
 
 - **类型:** dict[str, Any] | None
 
 - **说明:** 只有消息是群消息的时候才会有这个属性，其内容是 `/get_group_member_info` API 调用的返回值。
 
-### _async def staticmethod_ `create(bot, event)`
+### _async staticmethod_ `create(bot, event)` {#SenderRoles.create}
 
 - **说明**
 
@@ -238,13 +182,13 @@ has_perm = await check_permission(bot, event, normal_group_member)
 
 - **参数**
 
-    - `bot` (nonebot.NoneBot): 接收事件的 NoneBot 对象
+    - `bot` (NoneBot): 接收事件的 NoneBot 对象
 
     - `event` (aiocqhttp.event.Event): 上报事件
 
 - **返回**
 
-    nonebot.permission.SenderRoles
+    - `SenderRoles`
 
 - **用法**
 
@@ -261,7 +205,7 @@ if sender.is_groupchat:
 
 根据发送者的身份决定相应命令处理方式。
 
-### _def_ `from_group(self, group_id)`
+### _method_ `from_group(self, group_id)` {#SenderRoles.from_group}
 
 - **说明**
 
@@ -273,9 +217,9 @@ if sender.is_groupchat:
 
 - **返回**
 
-    bool
+    - `bool`
 
-### _def_ `sent_by(self, sender_id)`
+### _method_ `sent_by(self, sender_id)` {#SenderRoles.sent_by}
 
 - **说明**
 
@@ -287,4 +231,4 @@ if sender.is_groupchat:
 
 - **返回**
 
-    bool
+    - `bool`

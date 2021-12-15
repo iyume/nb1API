@@ -16,41 +16,21 @@ session.get('arg1', prompt='请输入 arg1：',
 
 注意 `extract_text` 和 `not_empty` 使用上的区别。
 
-## _def_ `between_inclusive(start=None, end=None, message=None)`
+## _def_ `not_empty(message=None)` {#not_empty}
 
 - **说明**
 
-验证输入是否在 `start` 到 `end` 之间（包括两者）。
+验证输入不为空。
 
 - **参数**
-
-    - `start`: 范围开始
-
-    - `end`: 范围结束
 
     - `message`
 
 - **返回**
 
-    (Any) -> (Any | Awaitable[Any])
+    - `(Any) -> (Any | Awaitable[Any])`
 
-## _def_ `ensure_true(bool_func, message=None)`
-
-- **说明**
-
-验证输入是否能使给定布尔函数返回 `True`。
-
-- **参数**
-
-    - `bool_func` ((Any) -> bool): 接受输入、返回布尔值的函数
-
-    - `message`
-
-- **返回**
-
-    (Any) -> (Any | Awaitable[Any])
-
-## _def_ `fit_size(min_length=0, max_length=None, message=None)`
+## _def_ `fit_size(min_length=0, max_length=None, message=None)` {#fit_size}
 
 - **说明**
 
@@ -66,9 +46,9 @@ session.get('arg1', prompt='请输入 arg1：',
 
 - **返回**
 
-    (Any) -> (Any | Awaitable[Any])
+    - `(Any) -> (Any | Awaitable[Any])`
 
-## _def_ `match_regex(pattern, message=None, *, flags=0, fullmatch=False)`
+## _def_ `match_regex(pattern, message=None, *, flags=0, fullmatch=False)` {#match_regex}
 
 - **说明**
 
@@ -86,18 +66,38 @@ session.get('arg1', prompt='请输入 arg1：',
 
 - **返回**
 
-    (Any) -> (Any | Awaitable[Any])
+    - `(Any) -> (Any | Awaitable[Any])`
 
-## _def_ `not_empty(message=None)`
+## _def_ `ensure_true(bool_func, message=None)` {#ensure_true}
 
 - **说明**
 
-验证输入不为空。
+验证输入是否能使给定布尔函数返回 `True`。
 
 - **参数**
+
+    - `bool_func` ((Any) -> bool): 接受输入、返回布尔值的函数
 
     - `message`
 
 - **返回**
 
-    (Any) -> (Any | Awaitable[Any])
+    - `(Any) -> (Any | Awaitable[Any])`
+
+## _def_ `between_inclusive(start=None, end=None, message=None)` {#between_inclusive}
+
+- **说明**
+
+验证输入是否在 `start` 到 `end` 之间（包括两者）。
+
+- **参数**
+
+    - `start`: 范围开始
+
+    - `end`: 范围结束
+
+    - `message`
+
+- **返回**
+
+    - `(Any) -> (Any | Awaitable[Any])`

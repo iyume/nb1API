@@ -5,17 +5,19 @@ sidebarDepth: 0
 
 # `nonebot.session` 模块
 
-## _class_ `BaseSession(bot, event)`
+## _class_ `BaseSession(bot, event)` {#BaseSession}
+
+- **说明**
 
 基础 session 类，`CommandSession` 等均继承自此类。
 
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
-### _instance-var_ `bot`
+### _instance-var_ `bot` {#BaseSession.bot}
 
 - **类型:** nonebot.NoneBot
 
@@ -29,7 +31,7 @@ await session.bot.send('hello')
 
 在当前 Session 对应的上下文中发送 `hello`。
 
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
+### _property_ `ctx` <Badge text="1.5.0-" type="error"/> {#BaseSession.ctx}
 
 - **类型:** aiocqhttp.event.Event
 
@@ -43,7 +45,7 @@ user_id = session.ctx['user_id']
 
 获取当前事件的 `user_id` 字段。
 
-### _instance-var_ `event` <Badge text="1.5.0+"/>
+### _instance-var_ `event` <Badge text="1.5.0+"/> {#BaseSession.event}
 
 - **类型:** aiocqhttp.event.Event
 
@@ -58,7 +60,7 @@ group_id = session.event.group_id
 
 获取当前事件的 `user_id` 和 `group_id` 字段。
 
-### _property_ `self_id` <Badge text="1.1.0+"/>
+### _property_ `self_id` <Badge text="1.1.0+"/> {#BaseSession.self_id}
 
 - **类型:** int
 
@@ -74,7 +76,7 @@ group_id = session.event.group_id
 await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
 ```
 
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
+### _async method_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)` {#BaseSession.send}
 
 - **说明**
 
@@ -90,7 +92,7 @@ await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='H
 
     - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
 
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
+    - `**kwargs`: 其它传入 `CQHttp.send()` 的命名参数
 
 - **返回**
 

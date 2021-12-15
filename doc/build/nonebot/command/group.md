@@ -5,7 +5,9 @@ sidebarDepth: 0
 
 # `nonebot.command.group` 模块
 
-## _class_ `CommandGroup(name, *, permission=Ellipsis, only_to_me=Ellipsis, privileged=Ellipsis, shell_like=Ellipsis, expire_timeout=Ellipsis, run_timeout=Ellipsis, session_class=Ellipsis)`
+## _class_ `CommandGroup(name, *, permission=..., only_to_me=..., privileged=..., shell_like=..., expire_timeout=..., run_timeout=..., session_class=...)` {#CommandGroup}
+
+- **说明**
 
 命令组，用于声明一组有相同名称前缀的命令。
 
@@ -29,9 +31,15 @@ sidebarDepth: 0
 
     - `run_timeout` (datetime.timedelta | None) <Badge text="1.8.2+"/>: 对应 `expire_timeout` 属性
 
-    - `session_class` (Type[nonebot.command.CommandSession] | None) <Badge text="1.8.1+"/>: 对应 `session_class` 属性
+    - `session_class` (Type[[CommandSession](command/index.md#CommandSession)] | None) <Badge text="1.8.1+"/>: 对应 `session_class` 属性
 
-### _instance-var_ `base_kwargs`
+### _instance-var_ `basename` {#CommandGroup.basename}
+
+- **类型:** tuple[str]
+
+- **说明:** 命令名前缀。
+
+### _instance-var_ `base_kwargs` {#CommandGroup.base_kwargs}
 
 - **类型:** dict[str, Any]
 
@@ -41,13 +49,7 @@ sidebarDepth: 0
 
 如果没有传递，则此字典也不存在相应键值。
 
-### _instance-var_ `basename`
-
-- **类型:** tuple[str]
-
-- **说明:** 命令名前缀。
-
-### _def_ `command(self, name, *, aliases=Ellipsis, patterns=Ellipsis, permission=Ellipsis, only_to_me=Ellipsis, privileged=Ellipsis, shell_like=Ellipsis, expire_timeout=Ellipsis, run_timeout=Ellipsis, session_class=Ellipsis)`
+### _method_ `command(self, name, *, aliases=..., patterns=..., permission=..., only_to_me=..., privileged=..., shell_like=..., expire_timeout=..., run_timeout=..., session_class=...)` {#CommandGroup.command}
 
 - **说明**
 
@@ -73,11 +75,11 @@ sidebarDepth: 0
 
     - `run_timeout` (datetime.timedelta | None) <Badge text="1.8.2+"/>: 同上
 
-    - `session_class` (Type[nonebot.command.CommandSession] | None) <Badge text="1.8.1+"/>: 同上
+    - `session_class` (Type[[CommandSession](command/index.md#CommandSession)] | None) <Badge text="1.8.1+"/>: 同上
 
 - **返回**
 
-    ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
+    - `((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]`
 
 - **用法**
 

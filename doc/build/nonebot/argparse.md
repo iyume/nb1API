@@ -5,25 +5,19 @@ sidebarDepth: 0
 
 # `nonebot.argparse` 模块
 
-## _class_ `ArgumentParser(*args, **kwargs)`
+## _class_ `ArgumentParser(*args, **kwargs)` {#ArgumentParser}
+
+- **说明**
 
 继承自 `argparse.ArgumentParser` 类，修改部分函数实现使其适用于命令型聊天机器人。
 
 此类可用于命令参数的解析。基本用法和 Python 内置的 `argparse.ArgumentParser` 类一致，下面主要列出与 Python 原生含义和行为不同的属性和方法。
 
-### 基类
-
-* argparse.ArgumentParser
-
-* argparse._AttributeHolder
-
-* argparse._ActionsContainer
-
 - **参数**
 
-    - `args`
+    - `*args`
 
-    - `kwargs`: 和 Python `argparse.ArgumentParser` 类一致
+    - `**kwargs`: 和 Python `argparse.ArgumentParser` 类一致
 
 - **用法**
 
@@ -54,7 +48,7 @@ async def _(session: CommandSession):
     # ...
 ```
 
-### _def_ `exit(self, status=0, message=None)`
+### _method_ `exit(self, status=0, message=None)` {#ArgumentParser.exit}
 
 - **参数**
 
@@ -64,9 +58,9 @@ async def _(session: CommandSession):
 
 - **返回**
 
-    Unknown
+    - `Unknown`
 
-### _def_ `parse_args(self, args=None, namespace=None)`
+### _method_ `parse_args(self, args=None, namespace=None)` {#ArgumentParser.parse_args}
 
 - **说明**
 
@@ -82,4 +76,4 @@ Python 原生的「打印到控制台」行为变为「发送消息到用户」�
 
 - **返回**
 
-    Unknown
+    - `Unknown`

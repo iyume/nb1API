@@ -5,49 +5,7 @@ sidebarDepth: 0
 
 # `nonebot.plugin` 模块 <Badge text="1.1.0+"/>
 
-## _def_ `get_loaded_plugins()`
-
-- **说明**
-
-获取已经加载的插件集合。
-
-- **参数**
-
-    无
-
-- **返回**
-
-    Set[Plugin]: 加载成功的 Plugin 对象
-
-- **用法**
-
-```python
-plugins = nonebot.plugin.get_loaded_plugins()
-await session.send('我现在支持以下功能：\n\n' +
-                    '\n'.join(map(lambda p: p.name, filter(lambda p: p.name, plugins))))
-```
-
-## _def_ `load_builtin_plugins()`
-
-- **说明**
-
-加载内置插件。
-
-- **参数**
-
-    无
-
-- **返回** <Badge text="1.6.0+"/>
-
-    Set[Plugin]: 加载成功的 Plugin 对象
-
-- **用法**
-
-```python
-nonebot.plugin.load_builtin_plugins()
-```
-
-## _def_ `load_plugin(module_path)`
+## _def_ `load_plugin(module_path)` {#load_plugin}
 
 - **说明**
 
@@ -61,12 +19,7 @@ nonebot.plugin.load_builtin_plugins()
 
 - **返回** <Badge text="1.6.0+"/>
 
-    Optional[Plugin]: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况：
-        - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
-        - 插件定义了异步加载回调，但 `load_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
-        - 插件定义了异步加载回调，但 `load_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会先执行部分同步的加载回调
-            - 如果成功，返回一个插件对象。返回值可以被 await，行为为等待剩余的异步加载完毕然后返回插件本身，或如果在 await 中发生了错误，返回 `None`
-            - 如果失败，返回 `None`
+    - `Optional[Plugin]`: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况： - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None` - 插件定义了异步加载回调，但 `load_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致 - 插件定义了异步加载回调，但 `load_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会先执行部分同步的加载回调 - 如果成功，返回一个插件对象。返回值可以被 await，行为为等待剩余的异步加载完毕然后返回插件本身，或如果在 await 中发生了错误，返回 `None` - 如果失败，返回 `None`
 
 - **用法**
 
@@ -86,7 +39,77 @@ else:
 ```
 加载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
 
-## _def_ `load_plugins(plugin_dir, module_prefix)`
+## _def_ `unload_plugin(module_path)` <Badge text="1.9.0+"/> {#unload_plugin}
+
+- **说明**
+
+卸载插件，即移除插件的 commands, nlprocessors, event handlers 和 message preprocessors，运行由 `on_plugin('unloaded')` 注册的函数（下称 「卸载回调」），并将已导入的模块移除。
+
+** Danger: **
+该函数为强制卸载，如果使用不当，可能导致不可预测的错误！（如引用已经被卸载的模块变量）
+
+此函数不会回滚已导入模块中产生过的其他副作用（比如已计划的任务，aiocqhttp 中注册的处理器等）。
+
+- **参数**
+
+    - `module_path` (str): 模块路径
+
+- **返回**
+
+    - `Optional[Plugin]`: 执行卸载后遗留的 `Plugin` 对象，或 `None` 如果插件不存在。根据插件组成不同，`Plugin` 返回值包含如下情况： - 插件没有定义卸载回调，或只定义了同步的卸载回调：此函数会卸载处理器并执行回调，在卸载完毕后返回遗留的插件对象，其可以被 await，行为为直接返回此插件本身。 - 插件定义了异步卸载回调，但 `unload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致 - 插件定义了异步卸载回调，但 `unload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。此对象可以被 await，行为为等待剩余的异步卸载回调执行完毕然后返回此插件本身。 - 在此之后此返回值将不再有用
+
+- **用法**
+
+```python
+nonebot.plugin.unload_plugin('ai_chat')
+```
+
+卸载 `ai_chat` 插件。
+
+```python
+# 此写法是通用的，即使插件没有异步的卸载回调
+p = nonebot.plugin.unload_plugin('my_own_plugin')
+if p is not None:
+    await p
+```
+卸载 `my_own_plugin` 插件，并且等待其异步的卸载回调（如果有）执行完成。
+
+## _def_ `reload_plugin(module_path)` {#reload_plugin}
+
+- **说明**
+
+重载插件，也就是先 `unload_plugin`，再 `load_plugin`。
+
+** Danger: **
+该函数为强制重载，如果使用不当，可能导致不可预测的错误！
+
+- **参数**
+
+    - `module_path` (str): 模块路径
+
+- **返回**
+
+    - `Optional[Plugin]`: 重载后生成的 Plugin 对象。根据插件组成不同，返回值包含如下情况： - 插件没有定义或只定义了同步的加载/卸载回调（此为 1.9.0 前的唯一情况）：此函数会执行两个步骤的回调，在重载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None` - 插件定义了异步的回调，但 `reload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致 - 插件定义了异步的回调，但 `reload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。返回值可以被 await，行为为等待剩余的异步卸载完毕并且加载新插件完毕后然后返回新的插件对象，或如果在 await 中发生了错误，返回 `None`
+
+- **用法**
+
+```python
+nonebot.plugin.reload_plugin('ai_chat')
+```
+
+重载 `ai_chat` 插件。
+
+```python
+# 此写法是通用的，即使插件没有异步的回调
+p = nonebot.plugin.reload_plugin('my_own_plugin')
+if p is not None and (p := await p) is not None:
+    # 插件成功加载完成
+else:
+    # 插件加载失败
+```
+重载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
+
+## _def_ `load_plugins(plugin_dir, module_prefix)` {#load_plugins}
 
 - **说明**
 
@@ -100,7 +123,7 @@ else:
 
 - **返回** <Badge text="1.6.0+"/>
 
-    Set[Plugin]: 加载成功的 Plugin 对象
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
 
 - **用法**
 
@@ -110,7 +133,84 @@ nonebot.plugin.load_plugins(path.join(path.dirname(__file__), 'plugins'), 'plugi
 
 加载 `plugins` 目录下的插件。
 
-## _def_ `on_command(name, *, aliases=(), patterns=(), permission=Ellipsis, only_to_me=True, privileged=False, shell_like=False, expire_timeout=Ellipsis, run_timeout=Ellipsis, session_class=None)` <Badge text="1.6.0+"/>
+## _def_ `load_builtin_plugins()` {#load_builtin_plugins}
+
+- **说明**
+
+加载内置插件。
+
+- **返回** <Badge text="1.6.0+"/>
+
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
+
+- **用法**
+
+```python
+nonebot.plugin.load_builtin_plugins()
+```
+
+## _def_ `get_loaded_plugins()` {#get_loaded_plugins}
+
+- **说明**
+
+获取已经加载的插件集合。
+
+- **返回**
+
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
+
+- **用法**
+
+```python
+plugins = nonebot.plugin.get_loaded_plugins()
+await session.send('我现在支持以下功能：\n\n' +
+                    '\n'.join(map(lambda p: p.name, filter(lambda p: p.name, plugins))))
+```
+
+## _def_ `on_plugin(timing)` <Badge text="1.9.0+"/> {#on_plugin}
+
+- **说明**
+
+将函数设置为插件生命周期的回调函数。注册的加载回调会在调用 `load_plugin` 时被调用，注册的卸载回调会在调用 `unload_plugin` 时被调用。
+
+- **要求**
+
+被装饰函数可为同步或异步（async def）函数，必须不接受参数，其返回值会被忽略:
+
+```python
+def func():
+    pass
+
+async def func():
+    pass
+```
+
+被 `on_plugin('unloaded')` 装饰的函数必须不能抛出 `Exception`，否则卸载时的行为将不能保证。
+
+- **参数**
+
+    - `timing` (str): `"loading"` 表示注册加载回调，`"unloaded"` 表示注册卸载回调
+
+- **返回**
+
+    - `(() -> Any | () -> Awaitable[Any]) -> (() -> Any | () -> Awaitable[Any])`
+
+- **用法**
+
+```python
+necessary_info = []
+
+@on_plugin('loading')
+async def _():
+    logger.info('正在加载插件...')
+    async with httpx.AsyncClient() as client:
+        r = await client.get('https://api.github.com/repos/nonebot/nonebot')
+        necessary_info.append(r.json())
+```
+
+注册一个加载回调为插件的加载做准备工作。
+
+## _def_ `on_command(name, *, aliases=(), patterns=(), permission=..., only_to_me=True, privileged=False, shell_like=False, expire_timeout=..., run_timeout=..., session_class=None)` <Badge text="1.6.0+"/> {#on_command}
 
 - **说明**
 
@@ -147,11 +247,11 @@ async def func(session: CommandSession):
 
     - `run_timeout` (datetime.timedelta | None) <Badge text="1.8.2+"/>: 命令会话的运行超时时长。如果不传入该参数（即为默认的 `...`），则使用配置项中的 `SESSION_RUN_TIMEOUT`，如果提供则使用提供的值。
 
-    - `session_class` (Type[nonebot.command.CommandSession] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
+    - `session_class` (Type[[CommandSession](command/index.md#CommandSession)] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
 
 - **返回**
 
-    ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
+    - `((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]`
 
 - **用法**
 
@@ -163,25 +263,27 @@ async def _(session: CommandSession):
 
 一个仅对超级用户生效的复读命令。
 
-## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/>
+## _def_ `on_natural_language(keywords=None, *, permission=..., only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/> {#on_natural_language}
 
 - **说明**
 
 将函数装饰为自然语言处理器。
 
-- **参数**
+- **重载**
 
-    **重载:**
+    1. `(__func)`
 
-    1. `(__func) -> NLPHandler_T`
+    参数
 
         - `__func` ((NLPSession) -> Awaitable[IntentCommand | None]): 被装饰函数，必须为 async 函数
 
-    返回:
+    返回
 
-        - `NLPHandler_T`: 测试自动文档
+        - `(NLPSession) -> Awaitable[IntentCommand | None]`: 测试自动文档
 
-    2. `(keywords=..., *, permission=..., only_to_me=..., only_short_message=..., allow_empty_message=...) -> (NLPHandler_T) -> NLPHandler_T`
+    2. `(keywords=..., *, permission=..., only_to_me=..., only_short_message=..., allow_empty_message=...)`
+
+    参数
 
         - `keywords` (Iterable[str] | str | NoneType): 要响应的关键词，若传入 `None`，则响应所有消息
 
@@ -193,13 +295,13 @@ async def _(session: CommandSession):
 
         - `allow_empty_message` (bool): 是否响应内容为空的消息（只有 @ 或机器人昵称）
 
-    返回:
+    返回
 
         - `return1`: 测试返回示例
 
         - `return2`: 测试返回示例
 
-## _def_ `on_notice(arg=None, *events)` <Badge text="1.6.0+"/>
+## _def_ `on_notice(arg=None, *events)` <Badge text="1.6.0+"/> {#on_notice}
 
 - **说明**
 
@@ -214,15 +316,27 @@ async def func(session: NoticeSession):
     pass
 ```
 
-- **参数**
+- **重载**
 
-    - `arg` (str | ~_Teh | NoneType)
+    1. `(__func)`
 
-    - `events` (str): 要处理的通知类型（`notice_type`），若不传入，则处理所有通知
+    参数
 
-- **返回**
+        - `__func` ((NoticeSession) -> Awaitable[Any])
 
-    (~_Teh) -> ~_Teh | ~_Teh
+    返回
+
+        - `(NoticeSession) -> Awaitable[Any]`
+
+    2. `(*events)`
+
+    参数
+
+        - `*events` (str)
+
+    返回
+
+        - `((NoticeSession) -> Awaitable[Any]) -> (NoticeSession) -> Awaitable[Any]`
 
 - **用法**
 
@@ -238,50 +352,7 @@ async def _(session: NoticeSession):
 
 收到所有通知时打日志，收到新成员进群通知时除了打日志还发送欢迎信息。
 
-## _def_ `on_plugin(timing)` <Badge text="1.9.0+"/>
-
-- **说明**
-
-将函数设置为插件生命周期的回调函数。注册的加载回调会在调用 `load_plugin` 时被调用，注册的卸载回调会在调用 `unload_plugin` 时被调用。
-
-- **要求**
-
-被装饰函数可为同步或异步（async def）函数，必须不接受参数，其返回值会被忽略:
-
-```python
-def func():
-    pass
-
-async def func():
-    pass
-```
-
-被 `on_plugin('unloaded')` 装饰的函数必须不能抛出 `Exception`，否则卸载时的行为将不能保证。
-
-- **参数**
-
-    - `timing` (str): `"loading"` 表示注册加载回调，`"unloaded"` 表示注册卸载回调
-
-- **返回**
-
-    (() -> Any | () -> Awaitable[Any]) -> (() -> Any | () -> Awaitable[Any])
-
-- **用法**
-
-```python
-necessary_info = []
-
-@on_plugin('loading')
-async def _():
-    logger.info('正在加载插件...')
-    async with httpx.AsyncClient() as client:
-        r = await client.get('https://api.github.com/repos/nonebot/nonebot')
-        necessary_info.append(r.json())
-```
-
-注册一个加载回调为插件的加载做准备工作。
-
-## _def_ `on_request(arg=None, *events)` <Badge text="1.6.0+"/>
+## _def_ `on_request(arg=None, *events)` <Badge text="1.6.0+"/> {#on_request}
 
 - **说明**
 
@@ -296,15 +367,27 @@ async def func(session: RequestSession):
     pass
 ```
 
-- **参数**
+- **重载**
 
-    - `arg` (str | ~_Teh | NoneType)
+    1. `(__func)`
 
-    - `events` (str): 要处理的请求类型（`request_type`），若不传入，则处理所有请求
+    参数
 
-- **返回**
+        - `__func` ((RequestSession) -> Awaitable[Any])
 
-    (~_Teh) -> ~_Teh | ~_Teh
+    返回
+
+        - `(RequestSession) -> Awaitable[Any]`
+
+    2. `(*events)`
+
+    参数
+
+        - `*events` (str)
+
+    返回
+
+        - `((RequestSession) -> Awaitable[Any]) -> (RequestSession) -> Awaitable[Any]`
 
 - **用法**
 
@@ -320,84 +403,9 @@ async def _(session: RequestSession):
 
 收到所有请求时打日志，收到群请求时除了打日志还同意请求。
 
-## _def_ `reload_plugin(module_path)`
+## _class_ `Plugin(module, name=None, usage=None, userdata=None, commands=..., nl_processors=..., event_handlers=..., msg_preprocessors=..., lifetime_hooks=...)` {#Plugin}
 
 - **说明**
-
-重载插件，也就是先 `unload_plugin`，再 `load_plugin`。
-
-** Danger: **
-该函数为强制重载，如果使用不当，可能导致不可预测的错误！
-
-- **参数**
-
-    - `module_path` (str): 模块路径
-
-- **返回**
-
-    Optional[Plugin]: 重载后生成的 Plugin 对象。根据插件组成不同，返回值包含如下情况：
-        - 插件没有定义或只定义了同步的加载/卸载回调（此为 1.9.0 前的唯一情况）：此函数会执行两个步骤的回调，在重载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
-        - 插件定义了异步的回调，但 `reload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
-        - 插件定义了异步的回调，但 `reload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。返回值可以被 await，行为为等待剩余的异步卸载完毕并且加载新插件完毕后然后返回新的插件对象，或如果在 await 中发生了错误，返回 `None`
-
-- **用法**
-
-```python
-nonebot.plugin.reload_plugin('ai_chat')
-```
-
-重载 `ai_chat` 插件。
-
-```python
-# 此写法是通用的，即使插件没有异步的回调
-p = nonebot.plugin.reload_plugin('my_own_plugin')
-if p is not None and (p := await p) is not None:
-    # 插件成功加载完成
-else:
-    # 插件加载失败
-```
-重载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
-
-## _def_ `unload_plugin(module_path)` <Badge text="1.9.0+"/>
-
-- **说明**
-
-卸载插件，即移除插件的 commands, nlprocessors, event handlers 和 message preprocessors，运行由 `on_plugin('unloaded')` 注册的函数（下称 「卸载回调」），并将已导入的模块移除。
-
-** Danger: **
-该函数为强制卸载，如果使用不当，可能导致不可预测的错误！（如引用已经被卸载的模块变量）
-
-此函数不会回滚已导入模块中产生过的其他副作用（比如已计划的任务，aiocqhttp 中注册的处理器等）。
-
-- **参数**
-
-    - `module_path` (str): 模块路径
-
-- **返回**
-
-    Optional[Plugin]: 执行卸载后遗留的 `Plugin` 对象，或 `None` 如果插件不存在。根据插件组成不同，`Plugin` 返回值包含如下情况：
-        - 插件没有定义卸载回调，或只定义了同步的卸载回调：此函数会卸载处理器并执行回调，在卸载完毕后返回遗留的插件对象，其可以被 await，行为为直接返回此插件本身。
-        - 插件定义了异步卸载回调，但 `unload_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
-        - 插件定义了异步卸载回调，但 `unload_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会卸载处理器并执行部分同步的卸载回调，返回遗留的插件对象。此对象可以被 await，行为为等待剩余的异步卸载回调执行完毕然后返回此插件本身。
-        - 在此之后此返回值将不再有用
-
-- **用法**
-
-```python
-nonebot.plugin.unload_plugin('ai_chat')
-```
-
-卸载 `ai_chat` 插件。
-
-```python
-# 此写法是通用的，即使插件没有异步的卸载回调
-p = nonebot.plugin.unload_plugin('my_own_plugin')
-if p is not None:
-    await p
-```
-卸载 `my_own_plugin` 插件，并且等待其异步的卸载回调（如果有）执行完成。
-
-## _class_ `Plugin(module, name=None, usage=None, userdata=None, commands=Ellipsis, nl_processors=Ellipsis, event_handlers=Ellipsis, msg_preprocessors=Ellipsis, lifetime_hooks=Ellipsis)`
 
 用于包装已加载的插件模块的类。
 
@@ -421,81 +429,79 @@ if p is not None:
 
     - `lifetime_hooks` (list[nonebot.plugin.LifetimeHook])
 
-### _instance-var_ `commands` <Badge text="1.6.0+"/>
+### _instance-var_ `commands` <Badge text="1.6.0+"/> {#Plugin.commands}
 
 - **类型:** set[nonebot.command.Command]
 
 - **说明:** 插件包含的命令，通过 `on_command` 装饰器注册。
 
-### _instance-var_ `event_handlers` <Badge text="1.6.0+"/>
+### _instance-var_ `event_handlers` <Badge text="1.6.0+"/> {#Plugin.event_handlers}
 
 - **类型:** set[nonebot.notice_request.EventHandler]
 
 - **说明:** 插件包含的事件处理器（包含通知、请求），通过 `on_notice` 以及 `on_request` 装饰器注册。
 
-### _instance-var_ `lifetime_hooks` <Badge text="1.9.0+"/>
+### _instance-var_ `lifetime_hooks` <Badge text="1.9.0+"/> {#Plugin.lifetime_hooks}
 
 - **类型:** list[nonebot.plugin.LifetimeHook]
 
 - **说明:** 插件包含的生命周期事件回调，通过 `on_plugin` 装饰器注册。
 
-### _instance-var_ `module`
+### _instance-var_ `module` {#Plugin.module}
 
 - **类型:** module
 
 - **说明:** 已加载的插件模块（importlib 导入的 Python 模块）。
 
-### _instance-var_ `msg_preprocessors` <Badge text="1.9.0+"/>
+### _instance-var_ `msg_preprocessors` <Badge text="1.9.0+"/> {#Plugin.msg_preprocessors}
 
 - **类型:** set[MessagePreprocessor]
 
 - **说明:** 插件包含的消息预处理器，通过 `message_preprocessor` 装饰器注册。
 
-### _instance-var_ `name`
+### _instance-var_ `name` {#Plugin.name}
 
 - **类型:** str | None
 
 - **说明:** 插件名称，从插件模块的 `__plugin_name__` 特殊变量获得，如果没有此变量，则为 `None`。
 
-### _instance-var_ `nl_processors` <Badge text="1.6.0+"/>
+### _instance-var_ `nl_processors` <Badge text="1.6.0+"/> {#Plugin.nl_processors}
 
 - **类型:** set[nonebot.natural_language.NLProcessor]
 
 - **说明:** 插件包含的自然语言处理器，通过 `on_natural_language` 装饰器注册。
 
-### _instance-var_ `usage`
+### _instance-var_ `usage` {#Plugin.usage}
 
 - **类型:** str | None
 
 - **说明:** 插件使用方法，从插件模块的 `__plugin_usage__` 特殊变量获得，如果没有此变量，则为 `None`。
 
-### _instance-var_ `userdata` <Badge text="1.9.0+"/>
+### _instance-var_ `userdata` <Badge text="1.9.0+"/> {#Plugin.userdata}
 
 - **类型:** Any | None
 
 - **说明:** 插件作者可由此变量向外部暴露其他信息，从插件模块的 `__plugin_userdata__` 特殊变量获得，如果没有此变量，则为 `None`。
 
-## _class_ `PluginManager()`
+## _class_ `PluginManager()` {#PluginManager}
+
+- **说明**
 
 插件管理器：用于管理插件的加载以及插件中命令、自然语言处理器、事件处理器的开关。
 
-- **参数**
-
-    无
-
-### _instance-var_ `cmd_manager`
+### _instance-var_ `cmd_manager` {#PluginManager.cmd_manager}
 
 - **类型:** 
 
 - **说明:** 命令管理器实例。
 
-### _instance-var_ `nlp_manager`
+### _instance-var_ `nlp_manager` {#PluginManager.nlp_manager}
 
 - **类型:** 
 
 - **说明:** 自然语言管理器实例。
 
-### _def classmethod_ `add_plugin(module_path, plugin)`
+### _classmethod_ `add_plugin(cls, module_path, plugin)` {#PluginManager.add_plugin}
 
 - **说明**
 
@@ -503,13 +509,15 @@ if p is not None:
 
 - **参数**
 
+    - `cls`
+
     - `module_path` (str): 模块路径
 
-    - `plugin` (nonebot.plugin.Plugin): Plugin 对象
+    - `plugin` ([Plugin](plugin.md#Plugin)): Plugin 对象
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -518,7 +526,7 @@ plugin = Plugin(module, name, usage, commands, nl_processors, event_handlers)
 PluginManager.add_plugin("path.to.plugin", plugin)
 ```
 
-### _def classmethod_ `get_plugin(module_path)`
+### _classmethod_ `get_plugin(cls, module_path)` {#PluginManager.get_plugin}
 
 - **说明**
 
@@ -526,11 +534,13 @@ PluginManager.add_plugin("path.to.plugin", plugin)
 
 - **参数**
 
+    - `cls`
+
     - `module_path` (str): 模块路径
 
 - **返回**
 
-    Optional[Plugin]: Plugin 对象
+    - `Optional[Plugin]`: Plugin 对象
 
 - **用法**
 
@@ -538,7 +548,7 @@ PluginManager.add_plugin("path.to.plugin", plugin)
 plugin = PluginManager.get_plugin("path.to.plugin")
 ```
 
-### _def classmethod_ `remove_plugin(module_path)`
+### _classmethod_ `remove_plugin(cls, module_path)` {#PluginManager.remove_plugin}
 
 - **说明**
 
@@ -551,17 +561,19 @@ plugin = PluginManager.get_plugin("path.to.plugin")
 
 - **参数**
 
+    - `cls`
+
     - `module_path` (str): 模块路径
 
 - **返回**
 
     - `bool`: 是否移除了插件
 
-### _def classmethod_ `switch_command_global(module_path, state=None)`
+### _method_ `switch_command(self, module_path, state=None)` {#PluginManager.switch_command}
 
 - **说明**
 
-根据 `state` 更改 plugin 中 commands 的全局状态。
+根据 `state` 修改 plugin 中 commands 的状态。仅对当前消息有效。
 
 - **参数**
 
@@ -571,7 +583,36 @@ plugin = PluginManager.get_plugin("path.to.plugin")
 
 - **返回**
 
-    None
+    - `None`
+
+- **用法**
+
+```python
+from nonebot import message_preprocessor
+
+# 关闭插件 path.to.plugin 中所有命令, 仅对当前消息生效
+@message_preprocessor
+async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+    plugin_manager.switch_command("path.to.plugin", state=False)
+```
+
+### _classmethod_ `switch_command_global(cls, module_path, state=None)` {#PluginManager.switch_command_global}
+
+- **说明**
+
+根据 `state` 更改 plugin 中 commands 的全局状态。
+
+- **参数**
+
+    - `cls`
+
+    - `module_path` (str): 模块路径
+
+    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
+
+- **返回**
+
+    - `None`
 
 - **用法**
 
@@ -580,7 +621,7 @@ plugin = PluginManager.get_plugin("path.to.plugin")
 PluginManager.switch_command_global("path.to.plugin", state=False)
 ```
 
-### _def classmethod_ `switch_eventhandler_global(module_path, state=None)`
+### _classmethod_ `switch_eventhandler_global(cls, module_path, state=None)` {#PluginManager.switch_eventhandler_global}
 
 - **说明**
 
@@ -588,13 +629,15 @@ PluginManager.switch_command_global("path.to.plugin", state=False)
 
 - **参数**
 
+    - `cls`
+
     - `module_path` (str): 模块路径
 
     - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -603,7 +646,7 @@ PluginManager.switch_command_global("path.to.plugin", state=False)
 PluginManager.switch_eventhandler_global("path.to.plugin", state=False)
 ```
 
-### _def classmethod_ `switch_messagepreprocessor_global(module_path, state=None)` <Badge text="1.9.0+"/>
+### _classmethod_ `switch_messagepreprocessor_global(cls, module_path, state=None)` <Badge text="1.9.0+"/> {#PluginManager.switch_messagepreprocessor_global}
 
 - **说明**
 
@@ -611,13 +654,15 @@ PluginManager.switch_eventhandler_global("path.to.plugin", state=False)
 
 - **参数**
 
+    - `cls`
+
     - `module_path` (str): 模块路径
 
     - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -626,11 +671,11 @@ PluginManager.switch_eventhandler_global("path.to.plugin", state=False)
 PluginManager.switch_messagepreprocessor_global("path.to.plugin", state=False)
 ```
 
-### _def classmethod_ `switch_nlprocessor_global(module_path, state=None)`
+### _method_ `switch_nlprocessor(self, module_path, state=None)` {#PluginManager.switch_nlprocessor}
 
 - **说明**
 
-根据 `state` 更改 plugin 中 nl_processors 的全局状态。
+根据 `state` 修改 plugin 中 nl_processors 的状态。仅对当前消息有效。
 
 - **参数**
 
@@ -640,7 +685,36 @@ PluginManager.switch_messagepreprocessor_global("path.to.plugin", state=False)
 
 - **返回**
 
-    None
+    - `None`
+
+- **用法**
+
+```python
+from nonebot import message_preprocessor
+
+# 关闭插件 path.to.plugin 中所有自然语言处理器, 仅对当前消息生效
+@message_preprocessor
+async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+    plugin_manager.switch_nlprocessor("path.to.plugin", state=False)
+```
+
+### _classmethod_ `switch_nlprocessor_global(cls, module_path, state=None)` {#PluginManager.switch_nlprocessor_global}
+
+- **说明**
+
+根据 `state` 更改 plugin 中 nl_processors 的全局状态。
+
+- **参数**
+
+    - `cls`
+
+    - `module_path` (str): 模块路径
+
+    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
+
+- **返回**
+
+    - `None`
 
 - **用法**
 
@@ -655,89 +729,7 @@ async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager)
     plugin_manager.switch_nlprocessor_global("path.to.plugin", state=False)
 ```
 
-### _def classmethod_ `switch_plugin_global(module_path, state=None)`
-
-- **说明**
-
-根据 `state` 更改 plugin 中 commands, nl_processors, event_handlers 的全局状态。
-
-在 1.9.0 后，msg_preprocessors 的状态也会被更改。
-
-** Warning: **
-更改插件状态并不会影响插件内 scheduler 等其他全局副作用状态
-
-- **参数**
-
-    - `module_path` (str): 模块路径
-
-    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
-
-- **返回**
-
-    None
-
-- **用法**
-
-```python
-# 全局关闭插件 path.to.plugin , 对所有消息生效
-PluginManager.switch_plugin_global("path.to.plugin", state=False)
-```
-
-### _def_ `switch_command(self, module_path, state=None)`
-
-- **说明**
-
-根据 `state` 修改 plugin 中 commands 的状态。仅对当前消息有效。
-
-- **参数**
-
-    - `module_path` (str): 模块路径
-
-    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
-
-- **返回**
-
-    None
-
-- **用法**
-
-```python
-from nonebot import message_preprocessor
-
-# 关闭插件 path.to.plugin 中所有命令, 仅对当前消息生效
-@message_preprocessor
-async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
-    plugin_manager.switch_command("path.to.plugin", state=False)
-```
-
-### _def_ `switch_nlprocessor(self, module_path, state=None)`
-
-- **说明**
-
-根据 `state` 修改 plugin 中 nl_processors 的状态。仅对当前消息有效。
-
-- **参数**
-
-    - `module_path` (str): 模块路径
-
-    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
-
-- **返回**
-
-    None
-
-- **用法**
-
-```python
-from nonebot import message_preprocessor
-
-# 关闭插件 path.to.plugin 中所有自然语言处理器, 仅对当前消息生效
-@message_preprocessor
-async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
-    plugin_manager.switch_nlprocessor("path.to.plugin", state=False)
-```
-
-### _def_ `switch_plugin(self, module_path, state=None)`
+### _method_ `switch_plugin(self, module_path, state=None)` {#PluginManager.switch_plugin}
 
 - **说明**
 
@@ -751,7 +743,7 @@ async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager)
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -762,4 +754,34 @@ from nonebot import message_preprocessor
 @message_preprocessor
 async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
     plugin_manager.switch_plugin("path.to.plugin", state=False)
+```
+
+### _classmethod_ `switch_plugin_global(cls, module_path, state=None)` {#PluginManager.switch_plugin_global}
+
+- **说明**
+
+根据 `state` 更改 plugin 中 commands, nl_processors, event_handlers 的全局状态。
+
+在 1.9.0 后，msg_preprocessors 的状态也会被更改。
+
+** Warning: **
+更改插件状态并不会影响插件内 scheduler 等其他全局副作用状态
+
+- **参数**
+
+    - `cls`
+
+    - `module_path` (str): 模块路径
+
+    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
+
+- **返回**
+
+    - `None`
+
+- **用法**
+
+```python
+# 全局关闭插件 path.to.plugin , 对所有消息生效
+PluginManager.switch_plugin_global("path.to.plugin", state=False)
 ```

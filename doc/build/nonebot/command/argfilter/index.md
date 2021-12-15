@@ -15,33 +15,13 @@ sidebarDepth: 0
 - 转换器，将参数进行类型或格式上的转换，例如 `int` 可以将字符串转换成整数，`converters` 子模块中提供了一些常用转换器
 - 控制器，根据用户输入或当前会话状态对会话进行相关控制，例如当用户发送 `算了` 时停止当前会话，`controllers` 子模块中提供了一些常用控制器
 
-## 子模块
+## _class_ `ValidateError()` {#ValidateError}
 
-* [nonebot.command.argfilter.controllers](controllers/)
-
-* [nonebot.command.argfilter.converters](converters/)
-
-* [nonebot.command.argfilter.extractors](extractors/)
-
-* [nonebot.command.argfilter.validators](validators/)
-
-## _class_ `ValidateError(message=None)`
+- **说明**
 
 用于表示验证失败的异常类。
 
-### 基类
-
-* builtins.ValueError
-
-* builtins.Exception
-
-* builtins.BaseException
-
-- **参数**
-
-    - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType)
-
-### _instance-var_ `message`
+### _instance-var_ `message` {#ValidateError.message}
 
 - **类型:** str | dict[str, Any] | list[dict[str, Any]] | NoneType
 

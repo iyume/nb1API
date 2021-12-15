@@ -5,7 +5,7 @@ sidebarDepth: 0
 
 # `nonebot.experimental.permission` 模块 <Badge text="1.8.0+"/>
 
-## _def_ `simple_allow_list(*, user_ids=Ellipsis, group_ids=Ellipsis, reverse=False)`
+## _def_ `simple_allow_list(*, user_ids=..., group_ids=..., reverse=False)` {#simple_allow_list}
 
 - **说明**
 
@@ -37,7 +37,7 @@ async def _(session: CommandSession):
     ...
 ```
 
-## _def_ `simple_time_range(begin_time, end_time, reverse=False, tz_info=None)`
+## _def_ `simple_time_range(begin_time, end_time, reverse=False, tz_info=None)` {#simple_time_range}
 
 - **说明**
 

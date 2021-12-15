@@ -7,35 +7,7 @@ sidebarDepth: 0
 
 提供几种常用的提取器。
 
-## _def_ `extract_image_urls(arg)`
-
-- **说明**
-
-提取消息中的图片 URL 列表。
-
-- **参数**
-
-    - `arg` (str | dict[str, Any] | list[dict[str, Any]])
-
-- **返回**
-
-    list[str]
-
-## _def_ `extract_numbers(arg)`
-
-- **说明**
-
-提取消息中的所有数字（浮点数）。
-
-- **参数**
-
-    - `arg` (str | dict[str, Any] | list[dict[str, Any]])
-
-- **返回**
-
-    list[float]
-
-## _def_ `extract_text(arg)`
+## _def_ `extract_text(arg)` {#extract_text}
 
 - **说明**
 
@@ -47,4 +19,32 @@ sidebarDepth: 0
 
 - **返回**
 
-    str
+    - `str`
+
+## _def_ `extract_image_urls(arg)` {#extract_image_urls}
+
+- **说明**
+
+提取消息中的图片 URL 列表。
+
+- **参数**
+
+    - `arg` (str | dict[str, Any] | list[dict[str, Any]])
+
+- **返回**
+
+    - `list[str]`
+
+## _def_ `extract_numbers(arg)` {#extract_numbers}
+
+- **说明**
+
+提取消息中的所有数字（浮点数）。
+
+- **参数**
+
+    - `arg` (str | dict[str, Any] | list[dict[str, Any]])
+
+- **返回**
+
+    - `list[float]`

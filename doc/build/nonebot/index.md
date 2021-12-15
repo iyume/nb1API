@@ -5,114 +5,7 @@ sidebarDepth: 0
 
 # `nonebot` 模块
 
-## 子模块
-
-* [nonebot.argparse](argparse/)
-
-* [nonebot.command](command/)
-
-* [nonebot.default_config](default_config/)
-
-* [nonebot.exceptions](exceptions/)
-
-* [nonebot.experimental](experimental/)
-
-* [nonebot.helpers](helpers/)
-
-* [nonebot.log](log/)
-
-* [nonebot.message](message/)
-
-* [nonebot.natural_language](natural_language/)
-
-* [nonebot.notice_request](notice_request/)
-
-* [nonebot.permission](permission/)
-
-* [nonebot.plugin](plugin/)
-
-* [nonebot.sched](sched/)
-
-* [nonebot.session](session/)
-
-* [nonebot.typing](typing/)
-
-## _var_ `_bot`
-
-- **类型:** nonebot.NoneBot | None
-
-## _var_ `scheduler`
-
-- **类型:** 
-
-## _def_ `context_id(event, *, mode='default', use_hash=False)`
-
-- **说明**
-
-获取事件对应的上下文的唯一 ID。
-
-- **参数**
-
-    - `event` (aiocqhttp.event.Event): 事件对象
-
-    - `mode` (str): ID 的计算模式 - `'default'`: 默认模式，任何一个上下文都有其唯一 ID - `'group'`: 群组模式，同一个群组或讨论组的上下文（即使是不同用户）具有相同 ID - `'user'`: 用户模式，同一个用户的上下文（即使在不同群组）具有相同 ID
-
-    - `use_hash` (bool): 是否将计算出的 ID 使用 MD5 进行哈希
-
-- **返回**
-
-    - `str`: 事件对应的上下文的唯一 ID
-
-- **用法**
-
-```python
-ctx_id = context_id(session.event, use_hash=True)
-```
-
-获取当前 Session 的事件对应的上下文的唯一 ID，并进行 MD5 哈希，得到的结果可用于图灵机器人等 API 的调用。
-
-## _def_ `get_bot()`
-
-- **说明**
-
-Get the NoneBot instance.
-
-The result is ensured to be not None, otherwise an exception will
-be raised.
-
-:raise ValueError: instance not initialized
-
-- **参数**
-
-    无
-
-- **返回**
-
-    nonebot.NoneBot
-
-## _def_ `get_loaded_plugins()`
-
-- **说明**
-
-获取已经加载的插件集合。
-
-- **参数**
-
-    无
-
-- **返回**
-
-    Set[Plugin]: 加载成功的 Plugin 对象
-
-- **用法**
-
-```python
-plugins = nonebot.plugin.get_loaded_plugins()
-await session.send('我现在支持以下功能：\n\n' +
-                    '\n'.join(map(lambda p: p.name, filter(lambda p: p.name, plugins))))
-```
-
-## _def_ `init(config_object=None, start_scheduler=True)`
+## _def_ `init(config_object=None, start_scheduler=True)` {#init}
 
 - **说明**
 
@@ -132,29 +25,74 @@ will work properly.
 
 - **返回**
 
-    None
+    - `None`
 
-## _def_ `load_builtin_plugins()`
+## _def_ `get_bot()` {#get_bot}
 
 - **说明**
 
-加载内置插件。
+Get the NoneBot instance.
+
+The result is ensured to be not None, otherwise an exception will
+be raised.
+
+:raise ValueError: instance not initialized
+
+- **返回**
+
+    - `nonebot.NoneBot`
+
+## _def_ `run(host=None, port=None, *args, **kwargs)` {#run}
+
+- **说明**
+
+Run the NoneBot instance.
 
 - **参数**
 
-    无
+    - `host` (str | None)
 
-- **返回** <Badge text="1.6.0+"/>
+    - `port` (int | None)
 
-    Set[Plugin]: 加载成功的 Plugin 对象
+    - `*args`
 
-- **用法**
+    - `**kwargs`
 
-```python
-nonebot.plugin.load_builtin_plugins()
-```
+- **返回**
 
-## _def_ `load_plugin(module_path)`
+    - `None`
+
+## _def_ `on_startup(func)` {#on_startup}
+
+- **说明**
+
+Decorator to register a function as startup callback.
+
+- **参数**
+
+    - `func` (() -> Awaitable[NoneType])
+
+- **返回**
+
+    - `() -> Awaitable[NoneType]`
+
+## _def_ `on_websocket_connect(func)` {#on_websocket_connect}
+
+- **说明**
+
+Decorator to register a function as websocket connect callback.
+
+Only work with CQHTTP v4.14+.
+
+- **参数**
+
+    - `func` ((aiocqhttp.event.Event) -> Awaitable[NoneType])
+
+- **返回**
+
+    - `() -> Awaitable[NoneType]`
+
+## _def_ `load_plugin(module_path)` {#load_plugin}
 
 - **说明**
 
@@ -168,12 +106,7 @@ nonebot.plugin.load_builtin_plugins()
 
 - **返回** <Badge text="1.6.0+"/>
 
-    Optional[Plugin]: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况：
-        - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None`
-        - 插件定义了异步加载回调，但 `load_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致
-        - 插件定义了异步加载回调，但 `load_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会先执行部分同步的加载回调
-            - 如果成功，返回一个插件对象。返回值可以被 await，行为为等待剩余的异步加载完毕然后返回插件本身，或如果在 await 中发生了错误，返回 `None`
-            - 如果失败，返回 `None`
+    - `Optional[Plugin]`: 加载后生成的 `Plugin` 对象。根据插件组成不同，返回值包含如下情况： - 插件没有定义加载回调，或只定义了同步的加载回调（此为 1.9.0 前的唯一情况）：此函数会执行回调，在加载完毕后返回新的插件对象，其可以被 await，行为为直接返回插件本身。如果发生异常，则返回 `None` - 插件定义了异步加载回调，但 `load_plugin` 是在 NoneBot 启动前调用的：此函数会阻塞地运行异步函数，其余表现和上一致 - 插件定义了异步加载回调，但 `load_plugin` 是在异步的情况下调用的（比如在 NoneBot 运行的事件循环中）：此函数会先执行部分同步的加载回调 - 如果成功，返回一个插件对象。返回值可以被 await，行为为等待剩余的异步加载完毕然后返回插件本身，或如果在 await 中发生了错误，返回 `None` - 如果失败，返回 `None`
 
 - **用法**
 
@@ -193,7 +126,7 @@ else:
 ```
 加载 `my_own_plugin` 插件，并且等待其异步的加载回调（如果有）执行完成。
 
-## _def_ `load_plugins(plugin_dir, module_prefix)`
+## _def_ `load_plugins(plugin_dir, module_prefix)` {#load_plugins}
 
 - **说明**
 
@@ -207,7 +140,7 @@ else:
 
 - **返回** <Badge text="1.6.0+"/>
 
-    Set[Plugin]: 加载成功的 Plugin 对象
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
 
 - **用法**
 
@@ -217,13 +150,47 @@ nonebot.plugin.load_plugins(path.join(path.dirname(__file__), 'plugins'), 'plugi
 
 加载 `plugins` 目录下的插件。
 
-## _def_ `message_preprocessor(func)`
+## _def_ `load_builtin_plugins()` {#load_builtin_plugins}
+
+- **说明**
+
+加载内置插件。
+
+- **返回** <Badge text="1.6.0+"/>
+
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
+
+- **用法**
+
+```python
+nonebot.plugin.load_builtin_plugins()
+```
+
+## _def_ `get_loaded_plugins()` {#get_loaded_plugins}
+
+- **说明**
+
+获取已经加载的插件集合。
+
+- **返回**
+
+    - `Set[Plugin]`: 加载成功的 Plugin 对象
+
+- **用法**
+
+```python
+plugins = nonebot.plugin.get_loaded_plugins()
+await session.send('我现在支持以下功能：\n\n' +
+                    '\n'.join(map(lambda p: p.name, filter(lambda p: p.name, plugins))))
+```
+
+## _def_ `message_preprocessor(func)` {#message_preprocessor}
 
 - **说明**
 
 将函数装饰为消息预处理器。
 
-- **要求** <Badge text="1.6.0+"/>
+- **要求**
 
 被装饰函数必须是一个 async 函数，且必须接收且仅接收三个位置参数，类型分别为 `NoneBot` 、 `aiocqhttp.Event` 和 `nonebot.plugin.PluginManager`，即形如：
 
@@ -238,7 +205,7 @@ async def func(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManag
 
 - **返回**
 
-    (nonebot.NoneBot, aiocqhttp.event.Event, nonebot.plugin.PluginManager) -> Awaitable[Any]
+    - `(NoneBot, CQEvent, PluginManager) -> Awaitable[Any]`
 
 - **用法**
 
@@ -253,7 +220,7 @@ async def _(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManager)
 
 在所有消息处理之前，向消息事件对象中加入 `preprocessed` 字段。
 
-## _def_ `on_command(name, *, aliases=(), patterns=(), permission=Ellipsis, only_to_me=True, privileged=False, shell_like=False, expire_timeout=Ellipsis, run_timeout=Ellipsis, session_class=None)` <Badge text="1.6.0+"/>
+## _def_ `on_command(name, *, aliases=(), patterns=(), permission=..., only_to_me=True, privileged=False, shell_like=False, expire_timeout=..., run_timeout=..., session_class=None)` <Badge text="1.6.0+"/> {#on_command}
 
 - **说明**
 
@@ -290,11 +257,11 @@ async def func(session: CommandSession):
 
     - `run_timeout` (datetime.timedelta | None) <Badge text="1.8.2+"/>: 命令会话的运行超时时长。如果不传入该参数（即为默认的 `...`），则使用配置项中的 `SESSION_RUN_TIMEOUT`，如果提供则使用提供的值。
 
-    - `session_class` (Type[nonebot.command.CommandSession] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
+    - `session_class` (Type[[CommandSession](command/index.md#CommandSession)] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
 
 - **返回**
 
-    ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
+    - `((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]`
 
 - **用法**
 
@@ -306,7 +273,7 @@ async def _(session: CommandSession):
 
 一个仅对超级用户生效的复读命令。
 
-## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/>
+## _def_ `on_natural_language(keywords=None, *, permission=..., only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/> {#on_natural_language}
 
 - **说明**
 
@@ -326,9 +293,9 @@ async def _(session: CommandSession):
 
 - **返回**
 
-    Unknown
+    - `Unknown`
 
-## _def_ `on_notice(arg=None, *events)` <Badge text="1.6.0+"/>
+## _def_ `on_notice(arg=None, *events)` <Badge text="1.6.0+"/> {#on_notice}
 
 - **说明**
 
@@ -347,11 +314,11 @@ async def func(session: NoticeSession):
 
     - `arg` (str | ~_Teh | NoneType)
 
-    - `events` (str): 要处理的通知类型（`notice_type`），若不传入，则处理所有通知
+    - `*events` (str): 要处理的通知类型（`notice_type`），若不传入，则处理所有通知
 
 - **返回**
 
-    (~_Teh) -> ~_Teh | ~_Teh
+    - `(~_Teh) -> ~_Teh | ~_Teh`
 
 - **用法**
 
@@ -367,7 +334,7 @@ async def _(session: NoticeSession):
 
 收到所有通知时打日志，收到新成员进群通知时除了打日志还发送欢迎信息。
 
-## _def_ `on_request(arg=None, *events)` <Badge text="1.6.0+"/>
+## _def_ `on_request(arg=None, *events)` <Badge text="1.6.0+"/> {#on_request}
 
 - **说明**
 
@@ -386,11 +353,11 @@ async def func(session: RequestSession):
 
     - `arg` (str | ~_Teh | NoneType)
 
-    - `events` (str): 要处理的请求类型（`request_type`），若不传入，则处理所有请求
+    - `*events` (str): 要处理的请求类型（`request_type`），若不传入，则处理所有请求
 
 - **返回**
 
-    (~_Teh) -> ~_Teh | ~_Teh
+    - `(~_Teh) -> ~_Teh | ~_Teh`
 
 - **用法**
 
@@ -406,41 +373,69 @@ async def _(session: RequestSession):
 
 收到所有请求时打日志，收到群请求时除了打日志还同意请求。
 
-## _def_ `on_startup(func)`
+## _def_ `context_id(event, *, mode='default', use_hash=False)` {#context_id}
 
 - **说明**
 
-Decorator to register a function as startup callback.
+获取事件对应的上下文的唯一 ID。
 
 - **参数**
 
-    - `func` (() -> Awaitable[NoneType])
+    - `event` (aiocqhttp.event.Event): 事件对象
+
+    - `mode` (str): ID 的计算模式 - `'default'`: 默认模式，任何一个上下文都有其唯一 ID - `'group'`: 群组模式，同一个群组或讨论组的上下文（即使是不同用户）具有相同 ID - `'user'`: 用户模式，同一个用户的上下文（即使在不同群组）具有相同 ID
+
+    - `use_hash` (bool): 是否将计算出的 ID 使用 MD5 进行哈希
 
 - **返回**
 
-    () -> Awaitable[NoneType]
+    - `str`: 事件对应的上下文的唯一 ID
 
-## _def_ `on_websocket_connect(func)`
+- **用法**
+
+```python
+ctx_id = context_id(session.event, use_hash=True)
+```
+
+获取当前 Session 的事件对应的上下文的唯一 ID，并进行 MD5 哈希，得到的结果可用于图灵机器人等 API 的调用。
+
+## _class_ `NoneBot(config_object=None)` {#NoneBot}
 
 - **说明**
 
-Decorator to register a function as websocket connect callback.
+OneBot (CQHTTP) 机器人的主类，负责控制整个机器人的运行、事件处理函数的注册、OneBot
 
-Only work with CQHTTP v4.14+.
+API 的调用等。
+
+内部维护了一个 `Quart` 对象作为 web 服务器，提供 HTTP 协议的 ``/`` 和 WebSocket
+协议的 ``/ws/``、``/ws/api/``、``/ws/event/`` 端点供 OneBot 连接。
+
+由于基类 `api.AsyncApi` 继承了 `api.Api` 的 `__getattr__`
+魔术方法，因此可以在 bot 对象上直接调用 OneBot API，例如：
+
+```py
+await bot.send_private_msg(user_id=10001000, message='你好')
+friends = await bot.get_friend_list()
+```
+
+也可以通过 `CQHttp.call_action` 方法调用 API，例如：
+
+```py
+await bot.call_action('set_group_whole_ban', group_id=10010)
+```
+
+两种调用 API 的方法最终都通过 `CQHttp.api` 属性来向 OneBot
+发送请求并获取调用结果。
 
 - **参数**
 
-    - `func` ((aiocqhttp.event.Event) -> Awaitable[NoneType])
+    - `config_object` (Any | None)
 
-- **返回**
-
-    () -> Awaitable[NoneType]
-
-## _def_ `run(host=None, port=None, *args, **kwargs)`
+### _method_ `run(self, host=None, port=None, *args, **kwargs)` {#NoneBot.run}
 
 - **说明**
 
-Run the NoneBot instance.
+运行 bot 对象，实际就是运行 Quart app，参数与 `Quart.run` 一致。
 
 - **参数**
 
@@ -448,67 +443,23 @@ Run the NoneBot instance.
 
     - `port` (int | None)
 
-    - `args`
+    - `*args`
 
-    - `kwargs`
+    - `**kwargs`
 
 - **返回**
 
-    None
+    - `None`
 
-## _class_ `CommandGroup(name, **kwargs)`
-
-Group a set of commands with same name prefix.
-
-- **参数**
-
-    - `name` (str | tuple[str, ...])
-
-    - `kwargs`
-
-### _instance-var_ `base_kwargs`
-
-- **类型:** 
-
-### _instance-var_ `basename`
-
-- **类型:** 
-
-### _def_ `command(self, name, **kwargs)`
+## _class_ `CommandSession(bot, event, cmd, *, current_arg='', args=None)` {#CommandSession}
 
 - **说明**
 
-Decorator to register a function as a command. Its has the same usage as
-
-`on_command`.
-
-:param kwargs: keyword arguments will be passed to `on_command`. For each
-               argument in the signature of this method here, if it is not
-               present when calling, default value for the command group is
-               used (e.g. `self.permission`). If that value is also not set,
-               default value for `on_command` is used.
-
-- **参数**
-
-    - `name` (str | tuple[str, ...])
-
-    - `kwargs`
-
-- **返回**
-
-    ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
-
-## _class_ `CommandSession(bot, event, cmd, *, current_arg='', args=None)`
-
 基础 session 类，`CommandSession` 等均继承自此类。
 
-### 基类
-
-* nonebot.session.BaseSession
-
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
@@ -518,7 +469,7 @@ Decorator to register a function as a command. Its has the same usage as
 
     - `args` (dict[str, Any] | None)
 
-### _property_ `argv`
+### _property_ `argv` {#CommandSession.argv}
 
 - **类型:** list[str]
 
@@ -532,94 +483,43 @@ async def _(session: CommandSession):
     argv = session.argv
 ```
 
-### _instance-var_ `bot`
-
-- **类型:** nonebot.NoneBot
-
-- **说明:** Session 对应的 NoneBot 对象。
-
-- **用法**
-
-```python
-await session.bot.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _instance-var_ `cmd`
-
-- **类型:** 
-
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，或称事件上下文，具体请参考 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.ctx['user_id']
-```
-
-获取当前事件的 `user_id` 字段。
-
-### _instance-var_ `current_arg`
+### _instance-var_ `current_arg` {#CommandSession.current_arg}
 
 - **类型:** str | None
 
-- **说明:** 命令会话当前参数。实际上是 酷 Q 收到的消息去掉命令名的剩下部分，因此可能存在 CQ 码。
-
-### _instance-var_ `current_arg_filters`
+### _instance-var_ `current_arg_filters` {#CommandSession.current_arg_filters}
 
 - **类型:** list[(Any) -> (Any | Awaitable[Any])] | None
 
-### _property_ `current_arg_images`
+### _property_ `current_arg_images` {#CommandSession.current_arg_images}
 
 - **类型:** list[str]
 
 - **说明:** `current_arg` 属性中所有图片的 URL 的列表，如果参数中没有图片，则为 `[]`。
 
-### _property_ `current_arg_text`
+### _property_ `current_arg_text` {#CommandSession.current_arg_text}
 
 - **类型:** str
 
 - **说明:** `current_arg` 属性的纯文本部分（不包含 CQ 码），各部分使用空格连接。
 
-### _instance-var_ `current_key`
+### _instance-var_ `current_key` {#CommandSession.current_key}
 
 - **类型:** str | None
 
-- **说明:** 命令会话当前正在询问用户的参数的键（或称参数的名字）。第一次运行会话时，该属性为 `None`。
-
-### _instance-var_ `event` <Badge text="1.5.0+"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，具体请参考 [`aiocqhttp.Event`](https://aiocqhttp.nonebot.dev/module/aiocqhttp/index.html#aiocqhttp.Event) 和 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.event['user_id']
-group_id = session.event.group_id
-```
-
-获取当前事件的 `user_id` 和 `group_id` 字段。
-
-### _property_ `expire_timeout`
+### _property_ `expire_timeout` {#CommandSession.expire_timeout}
 
 - **类型:** datetime.timedelta | None
 
 - **说明:** INTERNAL API
 
-### _property_ `is_first_run`
+### _property_ `is_first_run` {#CommandSession.is_first_run}
 
 - **类型:** bool
 
 - **说明:** 命令会话是否第一次运行。
 
-### _property_ `is_valid`
+### _property_ `is_valid` {#CommandSession.is_valid}
 
 - **类型:** bool
 
@@ -629,35 +529,19 @@ INTERNAL API
 
 Check whether the session has expired or not.
 
-### _property_ `run_timeout`
+### _property_ `run_timeout` {#CommandSession.run_timeout}
 
 - **类型:** datetime.timedelta | None
 
 - **说明:** INTERNAL API
 
-### _property_ `running`
+### _property_ `running` {#CommandSession.running}
 
 - **类型:** bool
 
 - **说明:** INTERNAL API
 
-### _property_ `self_id` <Badge text="1.1.0+"/>
-
-- **类型:** int
-
-- **说明**
-
-当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
-
-等价于 `session.event.self_id`。
-
-- **用法**
-
-```python
-await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
-```
-
-### _property_ `state` <Badge text="1.2.0+"/>
+### _property_ `state` <Badge text="1.2.0+"/> {#CommandSession.state}
 
 - **类型:** dict[str, Any]
 
@@ -676,13 +560,13 @@ if not session.state.get('initialized'):
 ```
 在命令处理函数的开头进行**每次命令调用只应该执行一次的初始化操作**。
 
-### _property_ `waiting`
+### _property_ `waiting` {#CommandSession.waiting}
 
 - **类型:** bool
 
 - **说明:** INTERNAL API
 
-### _async def_ `aget(self, key=Ellipsis, *, prompt=None, arg_filters=None, force_update=Ellipsis, **kwargs)` <Badge text="1.8.0+"/>
+### _async method_ `aget(self, key=..., *, prompt=None, arg_filters=None, force_update=..., **kwargs)` <Badge text="1.8.0+"/> {#CommandSession.aget}
 
 - **说明**
 
@@ -702,11 +586,11 @@ if not session.state.get('initialized'):
 
     - `force_update` (bool): 是否强制获取用户新的输入，若是，则会忽略已有的当前参数，若 `key` 不传入则为真，否则默认为假
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    Any
+    - `Any`
 
 - **用法**
 
@@ -736,7 +620,7 @@ time = await session.aget(
 
 连续获取多个参数，如果当前还不知道，则询问用户，等待用户输入之后，会依次运行 `arg_filters` 参数中的过滤器，以确保参数内容和格式符合要求。
 
-### _async def_ `apause(self, message=None, **kwargs)` <Badge text="1.8.0+"/>
+### _async method_ `apause(self, message=None, **kwargs)` <Badge text="1.8.0+"/> {#CommandSession.apause}
 
 - **说明**
 
@@ -748,11 +632,11 @@ time = await session.aget(
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -766,7 +650,7 @@ while True:
 
 需要连续接收用户输入，并且过程中不需要改变 `current_key` 时，使用此函数暂停会话。
 
-### _def_ `finish(self, message=None, **kwargs)`
+### _method_ `finish(self, message=None, **kwargs)` {#CommandSession.finish}
 
 - **说明**
 
@@ -778,11 +662,11 @@ while True:
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 
@@ -790,7 +674,7 @@ while True:
 session.finish('感谢您的使用～')
 ```
 
-### _def_ `get(self, key, *, prompt=None, arg_filters=None, **kwargs)`
+### _method_ `get(self, key, *, prompt=None, arg_filters=None, **kwargs)` {#CommandSession.get}
 
 - **说明**
 
@@ -808,11 +692,11 @@ session.finish('感谢您的使用～')
 
     - `arg_filters` (list[(Any) -> (Any | Awaitable[Any])] | None): 用于处理和验证用户输入的参数的过滤器
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    Any
+    - `Any`
 
 - **用法**
 
@@ -839,7 +723,7 @@ time = session.get(
 
 获取时间信息，如果当前还不知道，则询问用户，等待用户输入之后，会依次运行 `arg_filters` 参数中的过滤器，以确保参数内容和格式符合要求。
 
-### _def_ `pause(self, message=None, **kwargs)`
+### _method_ `pause(self, message=None, **kwargs)` {#CommandSession.pause}
 
 - **说明**
 
@@ -849,11 +733,11 @@ time = session.get(
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 
@@ -863,7 +747,7 @@ session.pause('请继续发送要处理的图片，发送 done 结束')
 
 需要连续接收用户输入，并且过程中不需要改变 `current_key` 时，使用此函数暂停会话。
 
-### _def_ `refresh(self, event, *, current_arg='')`
+### _method_ `refresh(self, event, *, current_arg='')` {#CommandSession.refresh}
 
 - **说明**
 
@@ -882,43 +766,9 @@ Refill the session with a new message event.
 
 - **返回**
 
-    None
+    - `None`
 
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
-
-- **说明**
-
-发送消息到 Session 对应的上下文中。
-
-- **参数**
-
-    - `message` (str | dict[str, Any] | list[dict[str, Any]]): 要发送的消息内容
-
-    - `at_sender` (bool): 是否 @ 发送者，对私聊不起作用
-
-    - `ensure_private` (bool): 确保消息发送到私聊，对于群组和讨论组消息上下文，会私聊发送者
-
-    - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
-
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
-
-- **返回**
-
-    - `Any` <Badge text="1.1.0+"/>: 返回 CQHTTP 插件发送消息接口的调用返回值，具体见 aiocqhttp 的 [API 调用](https://aiocqhttp.nonebot.dev/#/what-happened#api-%E8%B0%83%E7%94%A8)
-
-- **异常**
-
-    - `CQHttpError`: 发送失败时抛出，实际由 [aiocqhttp] 抛出，等价于 `aiocqhttp.Error`
-
-- **用法**
-
-```python
-await session.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _def_ `switch(self, new_message)`
+### _method_ `switch(self, new_message)` {#CommandSession.switch}
 
 - **说明**
 
@@ -941,7 +791,7 @@ Bot：今天下午南京到上海的火车票有如下班次：blahblahblah
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 
@@ -954,410 +804,115 @@ async def _(session: CommandSession)
 
 使用「算了」来取消当前命令，转而进入新的消息处理流程。这个例子比较简单，实际应用中可以使用更复杂的 NLP 技术来判断。
 
-## _class_ `IntentCommand(confidence, name, args=None, current_arg='')` <Badge text="1.2.0+"/>
+## _class_ `CommandGroup(name, **kwargs)` {#CommandGroup}
 
-用于表示自然语言处理之后得到的意图命令，是一个 namedtuple，由自然语言处理器返回。
+- **说明**
 
-### 基类
-
-* builtins.tuple
+Group a set of commands with same name prefix.
 
 - **参数**
 
-    - `args`
+    - `name` (str | tuple[str, ...])
 
-    - `kwargs`
+    - `**kwargs`
 
-### _instance-var_ `args`
+### _method_ `command(self, name, **kwargs)` {#CommandGroup.command}
 
-- **类型:** dict[str, Any] | None
+- **说明**
 
-- **说明:** 命令的（初始）参数。
+Decorator to register a function as a command. Its has the same usage as
 
-### _instance-var_ `confidence`
+`on_command`.
 
-- **类型:** float
+:param kwargs: keyword arguments will be passed to `on_command`. For each
+               argument in the signature of this method here, if it is not
+               present when calling, default value for the command group is
+               used (e.g. `self.permission`). If that value is also not set,
+               default value for `on_command` is used.
 
-- **说明:** 意图的置信度，即表示对当前推测的用户意图有多大把握。
+- **参数**
 
-### _instance-var_ `current_arg`
+    - `name` (str | tuple[str, ...])
 
-- **类型:** str
+    - `**kwargs`
 
-- **说明:** 命令的当前输入参数。
+- **返回**
 
-### _instance-var_ `name`
+    - `((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]`
 
-- **类型:** str | tuple[str, ...]
+## _class_ `NLPSession(bot, event, msg)` {#NLPSession}
 
-- **说明:** 命令的名字。
-
-## _class_ `NLPSession(bot, event, msg)`
+- **说明**
 
 继承自 `BaseSession` 类，表示自然语言处理 Session。
 
-### 基类
-
-* nonebot.session.BaseSession
-
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
     - `msg` (str)
 
-### _instance-var_ `bot`
-
-- **类型:** nonebot.NoneBot
-
-- **说明:** Session 对应的 NoneBot 对象。
-
-- **用法**
-
-```python
-await session.bot.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，或称事件上下文，具体请参考 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.ctx['user_id']
-```
-
-获取当前事件的 `user_id` 字段。
-
-### _instance-var_ `event` <Badge text="1.5.0+"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，具体请参考 [`aiocqhttp.Event`](https://aiocqhttp.nonebot.dev/module/aiocqhttp/index.html#aiocqhttp.Event) 和 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.event['user_id']
-group_id = session.event.group_id
-```
-
-获取当前事件的 `user_id` 和 `group_id` 字段。
-
-### _instance-var_ `msg`
+### _instance-var_ `msg` {#NLPSession.msg}
 
 - **类型:** str
 
-- **说明:** 以字符串形式表示的消息内容，已去除开头的 @ 和机器人称呼，可能存在 CQ 码。
-
-### _instance-var_ `msg_images`
+### _instance-var_ `msg_images` {#NLPSession.msg_images}
 
 - **类型:** list[str]
 
-- **说明:** 消息内容中所有图片的 URL 的列表，如果消息中没有图片，则为 `[]`。
-
-### _instance-var_ `msg_text`
+### _instance-var_ `msg_text` {#NLPSession.msg_text}
 
 - **类型:** str
 
-- **说明:** 消息内容的纯文本部分，已去除所有 CQ 码／非 `text` 类型的消息段。各纯文本消息段之间使用空格连接。
-
-### _property_ `self_id` <Badge text="1.1.0+"/>
-
-- **类型:** int
+## _class_ `IntentCommand()` <Badge text="1.2.0+"/> {#IntentCommand}
 
 - **说明**
 
-当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
+用于表示自然语言处理之后得到的意图命令，是一个 namedtuple，由自然语言处理器返回。
 
-等价于 `session.event.self_id`。
+### _class-var_ `args` {#IntentCommand.args}
 
-- **用法**
+- **类型:** dict[str, Any] | None
 
-```python
-await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
-```
+### _class-var_ `confidence` {#IntentCommand.confidence}
 
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
+- **类型:** float
 
-- **说明**
+### _class-var_ `current_arg` {#IntentCommand.current_arg}
 
-发送消息到 Session 对应的上下文中。
+- **类型:** str
 
-- **参数**
+### _class-var_ `name` {#IntentCommand.name}
 
-    - `message` (str | dict[str, Any] | list[dict[str, Any]]): 要发送的消息内容
+- **类型:** str | tuple[str, ...]
 
-    - `at_sender` (bool): 是否 @ 发送者，对私聊不起作用
-
-    - `ensure_private` (bool): 确保消息发送到私聊，对于群组和讨论组消息上下文，会私聊发送者
-
-    - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
-
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
-
-- **返回**
-
-    - `Any` <Badge text="1.1.0+"/>: 返回 CQHTTP 插件发送消息接口的调用返回值，具体见 aiocqhttp 的 [API 调用](https://aiocqhttp.nonebot.dev/#/what-happened#api-%E8%B0%83%E7%94%A8)
-
-- **异常**
-
-    - `CQHttpError`: 发送失败时抛出，实际由 [aiocqhttp] 抛出，等价于 `aiocqhttp.Error`
-
-- **用法**
-
-```python
-await session.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-## _class_ `NoneBot(config_object=None)`
-
-OneBot (CQHTTP) 机器人的主类，负责控制整个机器人的运行、事件处理函数的注册、OneBot
-
-API 的调用等。
-
-内部维护了一个 `Quart` 对象作为 web 服务器，提供 HTTP 协议的 ``/`` 和 WebSocket
-协议的 ``/ws/``、``/ws/api/``、``/ws/event/`` 端点供 OneBot 连接。
-
-由于基类 `api.AsyncApi` 继承了 `api.Api` 的 `__getattr__`
-魔术方法，因此可以在 bot 对象上直接调用 OneBot API，例如：
-
-```py
-await bot.send_private_msg(user_id=10001000, message='你好')
-friends = await bot.get_friend_list()
-```
-
-也可以通过 `CQHttp.call_action` 方法调用 API，例如：
-
-```py
-await bot.call_action('set_group_whole_ban', group_id=10010)
-```
-
-两种调用 API 的方法最终都通过 `CQHttp.api` 属性来向 OneBot
-发送请求并获取调用结果。
-
-### 基类
-
-* aiocqhttp.CQHttp
-
-* aiocqhttp.api.AsyncApi
-
-* aiocqhttp.api.Api
-
-- **参数**
-
-    - `config_object` (Any | None)
-
-### _def_ `run(self, host=None, port=None, *args, **kwargs)`
+## _class_ `NoticeSession(bot, event)` {#NoticeSession}
 
 - **说明**
-
-运行 bot 对象，实际就是运行 Quart app，参数与 `Quart.run` 一致。
-
-- **参数**
-
-    - `host` (str | None)
-
-    - `port` (int | None)
-
-    - `args`
-
-    - `kwargs`
-
-- **返回**
-
-    None
-
-## _class_ `NoticeSession(bot, event)`
 
 继承自 `BaseSession` 类，表示通知类事件的 Session。
 
-### 基类
-
-* nonebot.session.BaseSession
-
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
-### _instance-var_ `bot`
-
-- **类型:** nonebot.NoneBot
-
-- **说明:** Session 对应的 NoneBot 对象。
-
-- **用法**
-
-```python
-await session.bot.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，或称事件上下文，具体请参考 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.ctx['user_id']
-```
-
-获取当前事件的 `user_id` 字段。
-
-### _instance-var_ `event` <Badge text="1.5.0+"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，具体请参考 [`aiocqhttp.Event`](https://aiocqhttp.nonebot.dev/module/aiocqhttp/index.html#aiocqhttp.Event) 和 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.event['user_id']
-group_id = session.event.group_id
-```
-
-获取当前事件的 `user_id` 和 `group_id` 字段。
-
-### _property_ `self_id` <Badge text="1.1.0+"/>
-
-- **类型:** int
+## _class_ `RequestSession(bot, event)` {#RequestSession}
 
 - **说明**
-
-当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
-
-等价于 `session.event.self_id`。
-
-- **用法**
-
-```python
-await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
-```
-
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
-
-- **说明**
-
-发送消息到 Session 对应的上下文中。
-
-- **参数**
-
-    - `message` (str | dict[str, Any] | list[dict[str, Any]]): 要发送的消息内容
-
-    - `at_sender` (bool): 是否 @ 发送者，对私聊不起作用
-
-    - `ensure_private` (bool): 确保消息发送到私聊，对于群组和讨论组消息上下文，会私聊发送者
-
-    - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
-
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
-
-- **返回**
-
-    - `Any` <Badge text="1.1.0+"/>: 返回 CQHTTP 插件发送消息接口的调用返回值，具体见 aiocqhttp 的 [API 调用](https://aiocqhttp.nonebot.dev/#/what-happened#api-%E8%B0%83%E7%94%A8)
-
-- **异常**
-
-    - `CQHttpError`: 发送失败时抛出，实际由 [aiocqhttp] 抛出，等价于 `aiocqhttp.Error`
-
-- **用法**
-
-```python
-await session.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-## _class_ `RequestSession(bot, event)`
 
 继承自 `BaseSession` 类，表示请求类事件的 Session。
 
-### 基类
-
-* nonebot.session.BaseSession
-
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
-### _instance-var_ `bot`
-
-- **类型:** nonebot.NoneBot
-
-- **说明:** Session 对应的 NoneBot 对象。
-
-- **用法**
-
-```python
-await session.bot.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，或称事件上下文，具体请参考 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.ctx['user_id']
-```
-
-获取当前事件的 `user_id` 字段。
-
-### _instance-var_ `event` <Badge text="1.5.0+"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，具体请参考 [`aiocqhttp.Event`](https://aiocqhttp.nonebot.dev/module/aiocqhttp/index.html#aiocqhttp.Event) 和 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.event['user_id']
-group_id = session.event.group_id
-```
-
-获取当前事件的 `user_id` 和 `group_id` 字段。
-
-### _property_ `self_id` <Badge text="1.1.0+"/>
-
-- **类型:** int
-
-- **说明**
-
-当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
-
-等价于 `session.event.self_id`。
-
-- **用法**
-
-```python
-await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
-```
-
-### _async def_ `approve(self, remark='')`
+### _async method_ `approve(self, remark='')` {#RequestSession.approve}
 
 - **说明**
 
@@ -1369,7 +924,7 @@ await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='H
 
 - **返回**
 
-    None
+    - `None`
 
 - **异常**
 
@@ -1381,7 +936,7 @@ await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='H
 await session.approve()
 ```
 
-### _async def_ `reject(self, reason='')`
+### _async method_ `reject(self, reason='')` {#RequestSession.reject}
 
 - **说明**
 
@@ -1393,7 +948,7 @@ await session.approve()
 
 - **返回**
 
-    None
+    - `None`
 
 - **异常**
 
@@ -1405,129 +960,85 @@ await session.approve()
 await session.reject()
 ```
 
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
+## _class_ `SenderRoles()` <Badge text="1.9.0+"/> {#SenderRoles}
 
 - **说明**
 
-发送消息到 Session 对应的上下文中。
-
-- **参数**
-
-    - `message` (str | dict[str, Any] | list[dict[str, Any]]): 要发送的消息内容
-
-    - `at_sender` (bool): 是否 @ 发送者，对私聊不起作用
-
-    - `ensure_private` (bool): 确保消息发送到私聊，对于群组和讨论组消息上下文，会私聊发送者
-
-    - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
-
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
-
-- **返回**
-
-    - `Any` <Badge text="1.1.0+"/>: 返回 CQHTTP 插件发送消息接口的调用返回值，具体见 aiocqhttp 的 [API 调用](https://aiocqhttp.nonebot.dev/#/what-happened#api-%E8%B0%83%E7%94%A8)
-
-- **异常**
-
-    - `CQHttpError`: 发送失败时抛出，实际由 [aiocqhttp] 抛出，等价于 `aiocqhttp.Error`
-
-- **用法**
-
-```python
-await session.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-## _class_ `SenderRoles(bot, event, sender)` <Badge text="1.9.0+"/>
-
 封装了原生的 `CQEvent` 便于权限检查。此类的实例一般会传入 `PermissionPolicy_T` 作为参数。
 
-### 基类
-
-* builtins.tuple
-
-- **参数**
-
-    - `args`
-
-    - `kwargs`
-
-### _instance-var_ `bot`
+### _class-var_ `bot` {#SenderRoles.bot}
 
 - **类型:** nonebot.NoneBot
 
-### _instance-var_ `event`
+### _class-var_ `event` {#SenderRoles.event}
 
 - **类型:** aiocqhttp.event.Event
 
-### _property_ `is_admin`
+### _property_ `is_admin` {#SenderRoles.is_admin}
 
 - **类型:** bool
 
 - **说明:** 发送者是群管理员。
 
-### _property_ `is_anonymous`
+### _property_ `is_anonymous` {#SenderRoles.is_anonymous}
 
 - **类型:** bool
 
 - **说明:** 消息是匿名消息。
 
-### _property_ `is_discusschat`
+### _property_ `is_discusschat` {#SenderRoles.is_discusschat}
 
 - **类型:** bool
 
 - **说明:** 消息是讨论组消息。
 
-### _property_ `is_groupchat`
+### _property_ `is_groupchat` {#SenderRoles.is_groupchat}
 
 - **类型:** bool
 
 - **说明:** 消息是群聊消息。
 
-### _property_ `is_owner`
+### _property_ `is_owner` {#SenderRoles.is_owner}
 
 - **类型:** bool
 
 - **说明:** 发送者是群主。
 
-### _property_ `is_private_discuss`
+### _property_ `is_private_discuss` {#SenderRoles.is_private_discuss}
 
 - **类型:** bool
 
 - **说明:** 消息是讨论组私聊消息。
 
-### _property_ `is_private_friend`
+### _property_ `is_private_friend` {#SenderRoles.is_private_friend}
 
 - **类型:** bool
 
 - **说明:** 消息是好友私聊消息。
 
-### _property_ `is_private_group`
+### _property_ `is_private_group` {#SenderRoles.is_private_group}
 
 - **类型:** bool
 
 - **说明:** 消息是群私聊消息。
 
-### _property_ `is_privatechat`
+### _property_ `is_privatechat` {#SenderRoles.is_privatechat}
 
 - **类型:** bool
 
 - **说明:** 消息是私聊消息。
 
-### _property_ `is_superuser`
+### _property_ `is_superuser` {#SenderRoles.is_superuser}
 
 - **类型:** bool
 
 - **说明:** 发送者是配置文件中设置的超级用户。
 
-### _instance-var_ `sender`
+### _class-var_ `sender` {#SenderRoles.sender}
 
 - **类型:** dict[str, Any] | None
 
-- **说明:** 只有消息是群消息的时候才会有这个属性，其内容是 `/get_group_member_info` API 调用的返回值。
-
-### _async def staticmethod_ `create(bot, event)`
+### _async staticmethod_ `create(bot, event)` {#SenderRoles.create}
 
 - **说明**
 
@@ -1535,13 +1046,13 @@ await session.send('hello')
 
 - **参数**
 
-    - `bot` (nonebot.NoneBot): 接收事件的 NoneBot 对象
+    - `bot` (NoneBot): 接收事件的 NoneBot 对象
 
     - `event` (aiocqhttp.event.Event): 上报事件
 
 - **返回**
 
-    nonebot.permission.SenderRoles
+    - `SenderRoles`
 
 - **用法**
 
@@ -1558,7 +1069,7 @@ if sender.is_groupchat:
 
 根据发送者的身份决定相应命令处理方式。
 
-### _def_ `from_group(self, group_id)`
+### _method_ `from_group(self, group_id)` {#SenderRoles.from_group}
 
 - **说明**
 
@@ -1570,9 +1081,9 @@ if sender.is_groupchat:
 
 - **返回**
 
-    bool
+    - `bool`
 
-### _def_ `sent_by(self, sender_id)`
+### _method_ `sent_by(self, sender_id)` {#SenderRoles.sent_by}
 
 - **说明**
 
@@ -1584,16 +1095,22 @@ if sender.is_groupchat:
 
 - **返回**
 
-    bool
+    - `bool`
 
-### _library-attr_ `CQHttpError`
+## _library-attr_ `CQHttpError`
 
-三方库 API
-
-### _library-attr_ `Message`
+- **说明**
 
 三方库 API
 
-### _library-attr_ `MessageSegment`
+## _library-attr_ `Message`
+
+- **说明**
+
+三方库 API
+
+## _library-attr_ `MessageSegment`
+
+- **说明**
 
 三方库 API

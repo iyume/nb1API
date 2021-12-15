@@ -5,13 +5,7 @@ sidebarDepth: 0
 
 # `nonebot.command` 模块
 
-## 子模块
-
-* [nonebot.command.argfilter](argfilter/)
-
-* [nonebot.command.group](group/)
-
-## _async def_ `call_command(bot, event, name, *, current_arg='', args=None, check_perm=True, disable_interaction=False)`
+## _async def_ `call_command(bot, event, name, *, current_arg='', args=None, check_perm=True, disable_interaction=False)` {#call_command}
 
 - **说明**
 
@@ -19,7 +13,7 @@ sidebarDepth: 0
 
 - **参数**
 
-    - `bot` (nonebot.NoneBot): NoneBot 对象
+    - `bot` ([NoneBot](index.md#NoneBot)): NoneBot 对象
 
     - `event` (aiocqhttp.event.Event): 事件对象
 
@@ -45,7 +39,7 @@ await call_command(bot, event, 'say', current_arg='[CQ:face,id=14]', check_perm=
 
 从内部调用 `say` 命令，且不检查权限。
 
-## _def_ `kill_current_session(event)`
+## _def_ `kill_current_session(event)` {#kill_current_session}
 
 - **说明**
 
@@ -57,7 +51,7 @@ await call_command(bot, event, 'say', current_arg='[CQ:face,id=14]', check_perm=
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -69,39 +63,37 @@ async def _(session: CommandSession):
 
 在特权命令 `kill` 中强行移除当前正在运行的会话。
 
-## _class_ `CommandManager()` <Badge text="1.6.0+"/>
+## _class_ `CommandManager()` <Badge text="1.6.0+"/> {#CommandManager}
+
+- **说明**
 
 全局命令管理器
 
-- **参数**
-
-    无
-
-### _instance-var_ `aliases`
+### _instance-var_ `aliases` {#CommandManager.aliases}
 
 - **类型:** dict[str, nonebot.command.Command]
 
 - **说明:** 命令别名字典。
 
-### _instance-var_ `commands`
+### _instance-var_ `commands` {#CommandManager.commands}
 
 - **类型:** dict[tuple[str, ...], nonebot.command.Command]
 
 - **说明:** 命令字典。
 
-### _instance-var_ `patterns` <Badge text="1.7.0+"/>
+### _instance-var_ `patterns` <Badge text="1.7.0+"/> {#CommandManager.patterns}
 
 - **类型:** dict[Pattern[str], nonebot.command.Command]
 
 - **说明:** 命令正则匹配字典。
 
-### _instance-var_ `switches`
+### _instance-var_ `switches` {#CommandManager.switches}
 
 - **类型:** dict[nonebot.command.Command, bool]
 
 - **说明:** 命令开关状态字典。
 
-### _def classmethod_ `add_aliases(aliases, cmd)`
+### _classmethod_ `add_aliases(cls, aliases, cmd)` {#CommandManager.add_aliases}
 
 - **说明**
 
@@ -109,15 +101,17 @@ async def _(session: CommandSession):
 
 - **参数**
 
+    - `cls`
+
     - `aliases` (Iterable[str] | str): 命令别名列表
 
     - `cmd` (nonebot.command.Command)
 
 - **返回**
 
-    None
+    - `None`
 
-### _def classmethod_ `add_command(cmd_name, cmd)`
+### _classmethod_ `add_command(cls, cmd_name, cmd)` {#CommandManager.add_command}
 
 - **说明**
 
@@ -125,15 +119,17 @@ async def _(session: CommandSession):
 
 - **参数**
 
+    - `cls`
+
     - `cmd_name` (tuple[str, ...]): 命令名称
 
     - `cmd` (nonebot.command.Command): 命令对象
 
 - **返回**
 
-    None
+    - `None`
 
-### _def classmethod_ `add_patterns(patterns, cmd)`
+### _classmethod_ `add_patterns(cls, patterns, cmd)` {#CommandManager.add_patterns}
 
 - **说明**
 
@@ -141,15 +137,29 @@ Register command alias(es)
 
 - **参数**
 
+    - `cls`
+
     - `patterns` (Iterable[str] | str | Iterable[Pattern[str]] | Pattern[str]): Command patterns
 
     - `cmd` (nonebot.command.Command): Matched command
 
 - **返回**
 
-    None
+    - `None`
 
-### _def classmethod_ `reload_command(cmd_name, cmd)`
+### _method_ `parse_command(self, bot, cmd_string)` {#CommandManager.parse_command}
+
+- **参数**
+
+    - `bot` ([NoneBot](index.md#NoneBot))
+
+    - `cmd_string` (str)
+
+- **返回**
+
+    - `tuple[nonebot.command.Command | None, str | None]`
+
+### _classmethod_ `reload_command(cls, cmd_name, cmd)` {#CommandManager.reload_command}
 
 - **说明**
 
@@ -157,13 +167,15 @@ Register command alias(es)
 
 - **参数**
 
+    - `cls`
+
     - `cmd_name` (tuple[str, ...]): 命令名词
 
     - `cmd` (nonebot.command.Command): 命令对象
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -172,13 +184,15 @@ cmd = Command(name, func, permission, only_to_me, privileged)
 CommandManager.reload_command(name, cmd)
 ```
 
-### _def classmethod_ `remove_command(cmd_name)`
+### _classmethod_ `remove_command(cls, cmd_name)` {#CommandManager.remove_command}
 
 - **说明**
 
 移除一个已存在的命令。
 
 - **参数**
+
+    - `cls`
 
     - `cmd_name` (tuple[str, ...]): 命令名称
 
@@ -192,11 +206,11 @@ CommandManager.reload_command(name, cmd)
 CommandManager.remove_command(("test", ))
 ```
 
-### _def classmethod_ `switch_command_global(cmd_name, state=None)`
+### _method_ `switch_command(self, cmd_name, state=None)` {#CommandManager.switch_command}
 
 - **说明**
 
-根据 `state` 更改 command 的全局状态。
+根据 `state` 更改 command 的状态。仅对当前消息有效。
 
 - **参数**
 
@@ -206,7 +220,36 @@ CommandManager.remove_command(("test", ))
 
 - **返回**
 
-    None
+    - `None`
+
+- **用法**
+
+```python
+from nonebot import message_preprocessor
+
+# 关闭命令test, 仅对当前消息生效
+@message_preprocessor
+async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
+    plugin_manager.cmd_manager.switch_command(("test", ), state=False)
+```
+
+### _classmethod_ `switch_command_global(cls, cmd_name, state=None)` {#CommandManager.switch_command_global}
+
+- **说明**
+
+根据 `state` 更改 command 的全局状态。
+
+- **参数**
+
+    - `cls`
+
+    - `cmd_name` (tuple[str, ...]): 命令名称
+
+    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
+
+- **返回**
+
+    - `None`
 
 - **用法**
 
@@ -221,56 +264,15 @@ async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager)
     plugin_manager.cmd_manager.switch_command_global(("test", ), state=False)
 ```
 
-### _def_ `parse_command(self, bot, cmd_string)`
-
-- **参数**
-
-    - `bot` (nonebot.NoneBot)
-
-    - `cmd_string` (str)
-
-- **返回**
-
-    tuple[nonebot.command.Command | None, str | None]
-
-### _def_ `switch_command(self, cmd_name, state=None)`
+## _class_ `CommandSession(bot, event, cmd, *, current_arg='', args=None)` {#CommandSession}
 
 - **说明**
 
-根据 `state` 更改 command 的状态。仅对当前消息有效。
-
-- **参数**
-
-    - `cmd_name` (tuple[str, ...]): 命令名称
-
-    - `state` (bool | None): 切换至指定状态，`True` -> 开、`False` -> 关
-
-- **返回**
-
-    None
-
-- **用法**
-
-```python
-from nonebot import message_preprocessor
-
-# 关闭命令test, 仅对当前消息生效
-@message_preprocessor
-async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager):
-    plugin_manager.cmd_manager.switch_command(("test", ), state=False)
-```
-
-## _class_ `CommandSession(bot, event, cmd, *, current_arg='', args=None)`
-
 基础 session 类，`CommandSession` 等均继承自此类。
 
-### 基类
-
-* nonebot.session.BaseSession
-
 - **参数**
 
-    - `bot` (nonebot.NoneBot)
+    - `bot` ([NoneBot](index.md#NoneBot))
 
     - `event` (aiocqhttp.event.Event)
 
@@ -280,7 +282,7 @@ async def processor(bot: NoneBot, event: CQEvent, plugin_manager: PluginManager)
 
     - `args` (dict[str, Any] | None)
 
-### _property_ `argv`
+### _property_ `argv` {#CommandSession.argv}
 
 - **类型:** list[str]
 
@@ -294,89 +296,41 @@ async def _(session: CommandSession):
     argv = session.argv
 ```
 
-### _instance-var_ `bot`
-
-- **类型:** nonebot.NoneBot
-
-- **说明:** Session 对应的 NoneBot 对象。
-
-- **用法**
-
-```python
-await session.bot.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _instance-var_ `cmd`
-
-- **类型:** 
-
-### _property_ `ctx` <Badge text="1.5.0-" type="error"/>
-
-- **类型:** aiocqhttp.event.Event
-
-- **说明:** CQHTTP 上报的事件数据对象，或称事件上下文，具体请参考 [事件上报](https://cqhttp.cc/docs/#/Post)。
-
-- **用法**
-
-```python
-user_id = session.ctx['user_id']
-```
-
-获取当前事件的 `user_id` 字段。
-
-### _instance-var_ `current_arg`
+### _instance-var_ `current_arg` {#CommandSession.current_arg}
 
 - **类型:** str | None
 
 - **说明:** 命令会话当前参数。实际上是 酷 Q 收到的消息去掉命令名的剩下部分，因此可能存在 CQ 码。
 
-### _instance-var_ `current_arg_filters`
+### _instance-var_ `current_arg_filters` {#CommandSession.current_arg_filters}
 
 - **类型:** list[(Any) -> (Any | Awaitable[Any])] | None
 
-### _property_ `current_arg_images`
+### _property_ `current_arg_images` {#CommandSession.current_arg_images}
 
 - **类型:** list[str]
 
 - **说明:** `current_arg` 属性中所有图片的 URL 的列表，如果参数中没有图片，则为 `[]`。
 
-### _property_ `current_arg_text`
+### _property_ `current_arg_text` {#CommandSession.current_arg_text}
 
 - **类型:** str
 
 - **说明:** `current_arg` 属性的纯文本部分（不包含 CQ 码），各部分使用空格连接。
 
-### _instance-var_ `current_key`
+### _instance-var_ `current_key` {#CommandSession.current_key}
 
 - **类型:** str | None
 
 - **说明:** 命令会话当前正在询问用户的参数的键（或称参数的名字）。第一次运行会话时，该属性为 `None`。
 
-### _property_ `is_first_run`
+### _property_ `is_first_run` {#CommandSession.is_first_run}
 
 - **类型:** bool
 
 - **说明:** 命令会话是否第一次运行。
 
-### _property_ `self_id` <Badge text="1.1.0+"/>
-
-- **类型:** int
-
-- **说明**
-
-当前 session 对应的 QQ 机器人账号，在多个机器人账号使用同一个 NoneBot 后端时可用于区分当前收到消息或事件的是哪一个机器人。
-
-等价于 `session.event.self_id`。
-
-- **用法**
-
-```python
-await bot.send_private_msg(self_id=session.self_id, user_id=12345678, message='Hello')
-```
-
-### _property_ `state` <Badge text="1.2.0+"/>
+### _property_ `state` <Badge text="1.2.0+"/> {#CommandSession.state}
 
 - **类型:** dict[str, Any]
 
@@ -395,7 +349,7 @@ if not session.state.get('initialized'):
 ```
 在命令处理函数的开头进行**每次命令调用只应该执行一次的初始化操作**。
 
-### _async def_ `aget(self, key=Ellipsis, *, prompt=None, arg_filters=None, force_update=Ellipsis, **kwargs)` <Badge text="1.8.0+"/>
+### _async method_ `aget(self, key=..., *, prompt=None, arg_filters=None, force_update=..., **kwargs)` <Badge text="1.8.0+"/> {#CommandSession.aget}
 
 - **说明**
 
@@ -415,11 +369,11 @@ if not session.state.get('initialized'):
 
     - `force_update` (bool): 是否强制获取用户新的输入，若是，则会忽略已有的当前参数，若 `key` 不传入则为真，否则默认为假
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    Any
+    - `Any`
 
 - **用法**
 
@@ -449,7 +403,7 @@ time = await session.aget(
 
 连续获取多个参数，如果当前还不知道，则询问用户，等待用户输入之后，会依次运行 `arg_filters` 参数中的过滤器，以确保参数内容和格式符合要求。
 
-### _async def_ `apause(self, message=None, **kwargs)` <Badge text="1.8.0+"/>
+### _async method_ `apause(self, message=None, **kwargs)` <Badge text="1.8.0+"/> {#CommandSession.apause}
 
 - **说明**
 
@@ -461,11 +415,11 @@ time = await session.aget(
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    None
+    - `None`
 
 - **用法**
 
@@ -479,7 +433,7 @@ while True:
 
 需要连续接收用户输入，并且过程中不需要改变 `current_key` 时，使用此函数暂停会话。
 
-### _def_ `finish(self, message=None, **kwargs)`
+### _method_ `finish(self, message=None, **kwargs)` {#CommandSession.finish}
 
 - **说明**
 
@@ -491,11 +445,11 @@ while True:
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 
@@ -503,7 +457,7 @@ while True:
 session.finish('感谢您的使用～')
 ```
 
-### _def_ `get(self, key, *, prompt=None, arg_filters=None, **kwargs)`
+### _method_ `get(self, key, *, prompt=None, arg_filters=None, **kwargs)` {#CommandSession.get}
 
 - **说明**
 
@@ -521,11 +475,11 @@ session.finish('感谢您的使用～')
 
     - `arg_filters` (list[(Any) -> (Any | Awaitable[Any])] | None): 用于处理和验证用户输入的参数的过滤器
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    Any
+    - `Any`
 
 - **用法**
 
@@ -552,7 +506,7 @@ time = session.get(
 
 获取时间信息，如果当前还不知道，则询问用户，等待用户输入之后，会依次运行 `arg_filters` 参数中的过滤器，以确保参数内容和格式符合要求。
 
-### _def_ `pause(self, message=None, **kwargs)`
+### _method_ `pause(self, message=None, **kwargs)` {#CommandSession.pause}
 
 - **说明**
 
@@ -562,11 +516,11 @@ time = session.get(
 
     - `message` (str | dict[str, Any] | list[dict[str, Any]] | NoneType): 要发送的消息，若不传入则不发送
 
-    - `kwargs`: 其它传入 `BaseSession.send()` 的命名参数
+    - `**kwargs`: 其它传入 `BaseSession.send()` 的命名参数
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 
@@ -576,41 +530,7 @@ session.pause('请继续发送要处理的图片，发送 done 结束')
 
 需要连续接收用户输入，并且过程中不需要改变 `current_key` 时，使用此函数暂停会话。
 
-### _async def_ `send(self, message, *, at_sender=False, ensure_private=False, ignore_failure=True, **kwargs)`
-
-- **说明**
-
-发送消息到 Session 对应的上下文中。
-
-- **参数**
-
-    - `message` (str | dict[str, Any] | list[dict[str, Any]]): 要发送的消息内容
-
-    - `at_sender` (bool): 是否 @ 发送者，对私聊不起作用
-
-    - `ensure_private` (bool): 确保消息发送到私聊，对于群组和讨论组消息上下文，会私聊发送者
-
-    - `ignore_failure` (bool): 发送失败时忽略 `CQHttpError` 异常
-
-    - `kwargs`: 其它传入 `CQHttp.send()` 的命名参数
-
-- **返回**
-
-    - `Any` <Badge text="1.1.0+"/>: 返回 CQHTTP 插件发送消息接口的调用返回值，具体见 aiocqhttp 的 [API 调用](https://aiocqhttp.nonebot.dev/#/what-happened#api-%E8%B0%83%E7%94%A8)
-
-- **异常**
-
-    - `CQHttpError`: 发送失败时抛出，实际由 [aiocqhttp] 抛出，等价于 `aiocqhttp.Error`
-
-- **用法**
-
-```python
-await session.send('hello')
-```
-
-在当前 Session 对应的上下文中发送 `hello`。
-
-### _def_ `switch(self, new_message)`
+### _method_ `switch(self, new_message)` {#CommandSession.switch}
 
 - **说明**
 
@@ -633,7 +553,7 @@ Bot：今天下午南京到上海的火车票有如下班次：blahblahblah
 
 - **返回**
 
-    NoReturn
+    - `NoReturn`
 
 - **用法**
 

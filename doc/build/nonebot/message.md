@@ -5,13 +5,13 @@ sidebarDepth: 0
 
 # `nonebot.message` 模块
 
-## _def_ `message_preprocessor(func)`
+## _def_ `message_preprocessor(func)` {#message_preprocessor}
 
 - **说明**
 
 将函数装饰为消息预处理器。
 
-- **要求** <Badge text="1.6.0+"/>
+- **要求**
 
 被装饰函数必须是一个 async 函数，且必须接收且仅接收三个位置参数，类型分别为 `NoneBot` 、 `aiocqhttp.Event` 和 `nonebot.plugin.PluginManager`，即形如：
 
@@ -26,7 +26,7 @@ async def func(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManag
 
 - **返回**
 
-    (nonebot.NoneBot, aiocqhttp.event.Event, nonebot.plugin.PluginManager) -> Awaitable[Any]
+    - `(NoneBot, CQEvent, PluginManager) -> Awaitable[Any]`
 
 - **用法**
 
@@ -41,23 +41,15 @@ async def _(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManager)
 
 在所有消息处理之前，向消息事件对象中加入 `preprocessed` 字段。
 
-## _class_ `CanceledException(reason)` <Badge text="1.6.0+"/>
+## _class_ `CanceledException()` <Badge text="1.6.0+"/> {#CanceledException}
+
+- **说明**
 
 取消消息处理异常
-
-### 基类
-
-* builtins.Exception
-
-* builtins.BaseException
 
 - **要求**
 
 在消息预处理函数 `message_preprocessor` 中可以选择抛出该异常来阻止响应该消息。
-
-- **参数**
-
-    - `reason`
 
 - **用法**
 
@@ -67,13 +59,17 @@ async def _(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManager)
     raise CanceledException(reason)
 ```
 
-### _library-attr_ `Message`
+## _library-attr_ `Message`
+
+- **说明**
 
 从 `aiocqhttp.message` 模块导入，继承自 `list`，用于表示一个消息。该类型是合法的 `Message_T`。
 
 请参考 [aiocqhttp 文档](https://aiocqhttp.nonebot.dev/module/aiocqhttp/message.html#aiocqhttp.message.Message) 来了解此类的使用方法。
 
-### _library-attr_ `MessageSegment`
+## _library-attr_ `MessageSegment`
+
+- **说明**
 
 从 `aiocqhttp.message` 模块导入，继承自 `dict`，用于表示一个消息段。该类型是合法的 `Message_T`。
 
@@ -81,7 +77,9 @@ async def _(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManager)
 
 更多关于消息段的内容，见 [消息格式](https://github.com/botuniverse/onebot/tree/master/v11/specs/message)。
 
-### _library-attr_ `escape`
+## _library-attr_ `escape`
+
+- **说明**
 
 - **说明:**
 
@@ -97,7 +95,9 @@ async def _(bot: NoneBot, event: aiocqhttp.Event, plugin_manager: PluginManager)
 
     - `str`: 转义后的字符串
 
-### _library-attr_ `unescape`
+## _library-attr_ `unescape`
+
+- **说明**
 
 - **说明:**
 

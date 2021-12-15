@@ -9,7 +9,7 @@ sidebarDepth: 0
 
 这些验证器通常需要提供一些参数进行一次调用，返回的结果才是真正的验证器，其中的技巧在于通过闭包使要控制的对象能够被内部函数访问。
 
-## _def_ `handle_cancellation(session)`
+## _def_ `handle_cancellation(session)` {#handle_cancellation}
 
 - **说明**
 
@@ -19,8 +19,8 @@ sidebarDepth: 0
 
 - **参数**
 
-    - `session` (nonebot.command.CommandSession): 要控制的命令会话
+    - `session` ([CommandSession](command/index.md#CommandSession)): 要控制的命令会话
 
 - **返回**
 
-    Unknown
+    - `Unknown`

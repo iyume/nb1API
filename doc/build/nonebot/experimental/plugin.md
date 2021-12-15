@@ -9,7 +9,7 @@ sidebarDepth: 0
 
 [aiocqhttp]: https://github.com/nonebot/aiocqhttp/
 
-## _def_ `on_command(name, *, aliases=(), patterns=(), permission=Ellipsis, only_to_me=True, privileged=False, shell_like=False, expire_timeout=Ellipsis, run_timeout=Ellipsis, session_class=None)` <Badge text="1.6.0+"/>
+## _def_ `on_command(name, *, aliases=(), patterns=(), permission=..., only_to_me=True, privileged=False, shell_like=False, expire_timeout=..., run_timeout=..., session_class=None)` <Badge text="1.6.0+"/> {#on_command}
 
 - **说明**
 
@@ -46,11 +46,11 @@ async def func(session: CommandSession):
 
     - `run_timeout` (datetime.timedelta | None) <Badge text="1.8.2+"/>: 命令会话的运行超时时长。如果不传入该参数（即为默认的 `...`），则使用配置项中的 `SESSION_RUN_TIMEOUT`，如果提供则使用提供的值。
 
-    - `session_class` (Type[nonebot.command.CommandSession] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
+    - `session_class` (Type[[CommandSession](command/index.md#CommandSession)] | None) <Badge text="1.7.0+"/>: 自定义 `CommandSession` 子类，若传入此参数，则命令处理函数的参数 `session` 类型为 `session_class`
 
 - **返回**
 
-    ((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]
+    - `((CommandSession) -> Awaitable[Any]) -> (CommandSession) -> Awaitable[Any]`
 
 - **用法**
 
@@ -62,7 +62,7 @@ async def _(session: CommandSession):
 
 一个仅对超级用户生效的复读命令。
 
-## _def_ `on_natural_language(keywords=None, *, permission=Ellipsis, only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/>
+## _def_ `on_natural_language(keywords=None, *, permission=..., only_to_me=True, only_short_message=True, allow_empty_message=False)` <Badge text="1.6.0+"/> {#on_natural_language}
 
 - **说明**
 
@@ -82,4 +82,4 @@ async def _(session: CommandSession):
 
 - **返回**
 
-    Unknown
+    - `Unknown`
